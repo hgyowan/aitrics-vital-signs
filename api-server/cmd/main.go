@@ -27,6 +27,15 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// @title Vital Signs API
+// @version 1.0
+// @description Vital Signs Backend API
+// @host localhost:8080
+// @BasePath /v1
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	pkgLogger.MustInitZapLogger()
 	if pkgLogger.ZapLogger == nil {
