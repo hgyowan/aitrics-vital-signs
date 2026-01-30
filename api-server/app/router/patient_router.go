@@ -8,7 +8,7 @@ import (
 )
 
 func NewPatientRouter(engine *gin.Engine, controller patient.PatientController) {
-	v1Group := engine.Group("/v1")
+	v1Group := engine.Group("/api/v1")
 	v1Group.Use(middleware.ValidTokenMiddleware())
 
 	patientGroup := v1Group.Group("/patients")

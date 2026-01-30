@@ -8,11 +8,11 @@ import (
 )
 
 func NewVitalRouter(engine *gin.Engine, controller vital.VitalController) {
-	v1Group := engine.Group("/v1")
+	v1Group := engine.Group("/api/v1")
 	v1Group.Use(middleware.ValidTokenMiddleware())
 
 	vitalGroup := v1Group.Group("/vitals")
 	{
-		vitalGroup.POST("")
+		vitalGroup.POST("", controller.UpsertVital)
 	}
 }

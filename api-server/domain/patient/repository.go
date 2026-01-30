@@ -1,4 +1,4 @@
-//go:generate mockgen -source=repository.go -destination=../mock/mock_repository.go -package=mock
+//go:generate mockgen -source=repository.go -destination=../mock/mock_patient_repository.go -package=mock
 package patient
 
 import "context"
