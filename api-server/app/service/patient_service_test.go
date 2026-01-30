@@ -3,11 +3,15 @@ package service
 import (
 	"aitrics-vital-signs/api-server/domain/mock"
 	"aitrics-vital-signs/api-server/domain/patient"
+	pkgError "aitrics-vital-signs/library/error"
 	"context"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"gorm.io/gorm"
 )
 
 var (
@@ -71,6 +75,134 @@ func Test_CreatePatient(t *testing.T) {
 
 			if tt.wantErr {
 				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func Test_UpdatePatient(t *testing.T) {
+	tests := []struct {
+		name        string
+		patientID   string
+		req         patient.UpdatePatientRequest
+		setupMock   func()
+		wantErr     bool
+		expectedErr error
+	}{
+		{
+			name:      "성공 - 환자 정보 수정",
+			patientID: "P00001234",
+			req: patient.UpdatePatientRequest{
+				Name:      "홍길동수정",
+				Gender:    "F",
+				BirthDate: "1975-03-01",
+				Version:   1,
+			},
+			setupMock: func() {
+				now := time.Now().UTC()
+				existingPatient := &patient.Patient{
+					ID:        uuid.NewString(),
+					PatientID: "P00001234",
+					Name:      "홍길동",
+					Gender:    "M",
+					BirthDate: now,
+					Version:   1,
+					CreatedAt: now,
+					UpdatedAt: &now,
+				}
+				mockRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P00001234").
+					Return(existingPatient, nil)
+				mockRepository.EXPECT().
+					UpdatePatient(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, p *patient.Patient) error {
+						require.Equal(t, "홍길동수정", p.Name)
+						require.Equal(t, "F", p.Gender)
+						require.Equal(t, 2, p.Version)
+						require.NotNil(t, p.UpdatedAt)
+						return nil
+					})
+			},
+			wantErr: false,
+		},
+		{
+			name:      "실패 - Version Conflict (Optimistic Lock)",
+			patientID: "P00001234",
+			req: patient.UpdatePatientRequest{
+				Name:      "홍길동수정",
+				Gender:    "F",
+				BirthDate: "1975-03-01",
+				Version:   2,
+			},
+			setupMock: func() {
+				now := time.Now().UTC()
+				existingPatient := &patient.Patient{
+					ID:        uuid.NewString(),
+					PatientID: "P00001234",
+					Name:      "홍길동",
+					Gender:    "M",
+					BirthDate: now,
+					Version:   1,
+					CreatedAt: now,
+					UpdatedAt: &now,
+				}
+				mockRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P00001234").
+					Return(existingPatient, nil)
+			},
+			wantErr:     true,
+			expectedErr: pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Conflict),
+		},
+		{
+			name:      "실패 - 환자 없음",
+			patientID: "P99999999",
+			req: patient.UpdatePatientRequest{
+				Name:      "홍길동수정",
+				Gender:    "F",
+				BirthDate: "1975-03-01",
+				Version:   1,
+			},
+			setupMock: func() {
+				mockRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P99999999").
+					Return(nil, gorm.ErrRecordNotFound)
+			},
+			wantErr:     true,
+			expectedErr: pkgError.WrapWithCode(gorm.ErrRecordNotFound, pkgError.Get),
+		},
+		{
+			name:      "실패 - 날짜 파라미터 포멧 에러",
+			patientID: "P00001234",
+			req: patient.UpdatePatientRequest{
+				Name:      "홍길동수정",
+				Gender:    "F",
+				BirthDate: "19750301",
+				Version:   1,
+			},
+			setupMock: func() {},
+			wantErr:   true,
+		},
+	}
+
+	ctx := context.Background()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			beforeEach(t)
+			tt.setupMock()
+
+			err := svc.UpdatePatient(ctx, tt.patientID, tt.req)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				if tt.expectedErr != nil {
+					if pkgError.CompareBusinessError(tt.expectedErr, pkgError.Conflict) {
+						require.True(t, pkgError.CompareBusinessError(err, pkgError.Conflict))
+					} else if pkgError.CompareBusinessError(tt.expectedErr, pkgError.Get) {
+						require.True(t, pkgError.CompareBusinessError(err, pkgError.Get))
+					}
+				}
 			} else {
 				require.NoError(t, err)
 			}

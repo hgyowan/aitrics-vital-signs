@@ -6,3 +6,10 @@ type CreatePatientRequest struct {
 	Gender    string `json:"gender" binding:"required,oneof=M F"`
 	BirthDate string `json:"birthDate" binding:"required,datetime=2006-01-02"`
 }
+
+type UpdatePatientRequest struct {
+	Name      string `json:"name" binding:"required"`
+	Gender    string `json:"gender" binding:"required,oneof=M F"`
+	BirthDate string `json:"birthDate" binding:"required,datetime=2006-01-02"`
+	Version   int    `json:"version" binding:"required,min=1"`
+}

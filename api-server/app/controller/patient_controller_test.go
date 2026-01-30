@@ -96,3 +96,135 @@ func Test_CreatePatient(t *testing.T) {
 		})
 	}
 }
+
+func Test_UpdatePatient(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	tests := []struct {
+		name           string
+		patientID      string
+		body           string
+		mockSetup      func(svc *mock.MockPatientService)
+		wantStatusCode int
+	}{
+		{
+			name:      "성공 - 환자 정보 수정",
+			patientID: "P00001234",
+			body: `{
+				"name": "홍길동수정",
+				"gender": "F",
+				"birthDate": "1975-03-01",
+				"version": 1
+			}`,
+			mockSetup: func(svc *mock.MockPatientService) {
+				svc.EXPECT().
+					UpdatePatient(gomock.Any(), "P00001234", gomock.Any()).
+					Return(nil)
+			},
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			name:      "실패 - 필수 필드 누락 (version 없음)",
+			patientID: "P00001234",
+			body: `{
+				"name": "홍길동수정",
+				"gender": "F",
+				"birthDate": "1975-03-01"
+			}`,
+			mockSetup:      func(svc *mock.MockPatientService) {},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:      "실패 - Version Conflict (Optimistic Lock)",
+			patientID: "P00001234",
+			body: `{
+				"name": "홍길동수정",
+				"gender": "F",
+				"birthDate": "1975-03-01",
+				"version": 2
+			}`,
+			mockSetup: func(svc *mock.MockPatientService) {
+				svc.EXPECT().
+					UpdatePatient(gomock.Any(), "P00001234", gomock.Any()).
+					Return(pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Conflict, "version mismatch"))
+			},
+			wantStatusCode: http.StatusConflict,
+		},
+		{
+			name:      "실패 - 잘못된 Gender 값",
+			patientID: "P00001234",
+			body: `{
+				"name": "홍길동수정",
+				"gender": "X",
+				"birthDate": "1975-03-01",
+				"version": 1
+			}`,
+			mockSetup:      func(svc *mock.MockPatientService) {},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:      "실패 - 잘못된 날짜 형식",
+			patientID: "P00001234",
+			body: `{
+				"name": "홍길동수정",
+				"gender": "F",
+				"birthDate": "19750301",
+				"version": 1
+			}`,
+			mockSetup:      func(svc *mock.MockPatientService) {},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:      "실패 - patient_id 파라미터 없음",
+			patientID: "",
+			body: `{
+				"name": "홍길동수정",
+				"gender": "F",
+				"birthDate": "1975-03-01",
+				"version": 1
+			}`,
+			mockSetup:      func(svc *mock.MockPatientService) {},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:      "실패 - 비즈니스 로직 에러 (500)",
+			patientID: "P00001234",
+			body: `{
+				"name": "홍길동수정",
+				"gender": "F",
+				"birthDate": "1975-03-01",
+				"version": 1
+			}`,
+			mockSetup: func(svc *mock.MockPatientService) {
+				svc.EXPECT().
+					UpdatePatient(gomock.Any(), "P00001234", gomock.Any()).
+					Return(pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Update))
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			beforeEach(t)
+			tt.mockSetup(mockService)
+
+			w := httptest.NewRecorder()
+			ctx, _ := gin.CreateTestContext(w)
+
+			req := httptest.NewRequest(
+				http.MethodPut,
+				"/v1/patients/"+tt.patientID,
+				strings.NewReader(tt.body),
+			)
+			req.Header.Set("Content-Type", "application/json")
+			ctx.Request = req
+			ctx.Params = gin.Params{
+				{Key: "patient_id", Value: tt.patientID},
+			}
+
+			controller.UpdatePatient(ctx)
+
+			require.Equal(t, tt.wantStatusCode, w.Code)
+		})
+	}
+}

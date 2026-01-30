@@ -54,3 +54,32 @@ func (mr *MockPatientRepositoryMockRecorder) CreatePatient(ctx, model any) *gomo
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePatient", reflect.TypeOf((*MockPatientRepository)(nil).CreatePatient), ctx, model)
 }
+
+// FindPatientByID mocks base method.
+func (m *MockPatientRepository) FindPatientByID(ctx context.Context, patientID string) (*patient.Patient, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindPatientByID", ctx, patientID)
+	ret0, _ := ret[0].(*patient.Patient)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindPatientByID indicates an expected call of FindPatientByID.
+func (mr *MockPatientRepositoryMockRecorder) FindPatientByID(ctx, patientID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindPatientByID", reflect.TypeOf((*MockPatientRepository)(nil).FindPatientByID), ctx, patientID)
+}
+
+// UpdatePatient mocks base method.
+func (m *MockPatientRepository) UpdatePatient(ctx context.Context, model *patient.Patient) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePatient", ctx, model)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdatePatient indicates an expected call of UpdatePatient.
+func (mr *MockPatientRepositoryMockRecorder) UpdatePatient(ctx, model any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePatient", reflect.TypeOf((*MockPatientRepository)(nil).UpdatePatient), ctx, model)
+}

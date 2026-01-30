@@ -54,3 +54,17 @@ func (mr *MockPatientServiceMockRecorder) CreatePatient(ctx, request any) *gomoc
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePatient", reflect.TypeOf((*MockPatientService)(nil).CreatePatient), ctx, request)
 }
+
+// UpdatePatient mocks base method.
+func (m *MockPatientService) UpdatePatient(ctx context.Context, patientID string, request patient.UpdatePatientRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePatient", ctx, patientID, request)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdatePatient indicates an expected call of UpdatePatient.
+func (mr *MockPatientServiceMockRecorder) UpdatePatient(ctx, patientID, request any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePatient", reflect.TypeOf((*MockPatientService)(nil).UpdatePatient), ctx, patientID, request)
+}

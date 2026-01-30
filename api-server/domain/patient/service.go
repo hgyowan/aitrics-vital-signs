@@ -5,4 +5,5 @@ import "context"
 
 type PatientService interface {
 	CreatePatient(ctx context.Context, request CreatePatientRequest) error
+	UpdatePatient(ctx context.Context, patientID string, request UpdatePatientRequest) error
 }

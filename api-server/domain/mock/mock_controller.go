@@ -51,3 +51,15 @@ func (mr *MockPatientControllerMockRecorder) CreatePatient(ctx any) *gomock.Call
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePatient", reflect.TypeOf((*MockPatientController)(nil).CreatePatient), ctx)
 }
+
+// UpdatePatient mocks base method.
+func (m *MockPatientController) UpdatePatient(ctx *gin.Context) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "UpdatePatient", ctx)
+}
+
+// UpdatePatient indicates an expected call of UpdatePatient.
+func (mr *MockPatientControllerMockRecorder) UpdatePatient(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePatient", reflect.TypeOf((*MockPatientController)(nil).UpdatePatient), ctx)
+}

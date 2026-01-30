@@ -5,4 +5,5 @@ import "github.com/gin-gonic/gin"
 
 type PatientController interface {
 	CreatePatient(ctx *gin.Context)
+	UpdatePatient(ctx *gin.Context)
 }

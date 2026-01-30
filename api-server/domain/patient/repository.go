@@ -5,4 +5,6 @@ import "context"
 
 type PatientRepository interface {
 	CreatePatient(ctx context.Context, model *Patient) error
+	FindPatientByID(ctx context.Context, patientID string) (*Patient, error)
+	UpdatePatient(ctx context.Context, model *Patient) error
 }
