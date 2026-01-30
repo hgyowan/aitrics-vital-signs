@@ -12,7 +12,7 @@ type patientRepository struct {
 }
 
 func (p *patientRepository) CreatePatient(ctx context.Context, model *patient.Patient) error {
-	return pkgError.WrapWithCode(p.externalGormClient.MySQL().WithContext(ctx).Create(model).Error, pkgError.Create)
+	return pkgError.Wrap(p.externalGormClient.MySQL().WithContext(ctx).Create(model).Error)
 }
 
 func NewPatientRepository(externalGormClient domain.ExternalDBClient) patient.PatientRepository {

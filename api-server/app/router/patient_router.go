@@ -13,6 +13,6 @@ func NewPatientRouter(engine *gin.Engine, controller patient.PatientController) 
 
 	patientGroup := v1Group.Group("/patients")
 	{
-		patientGroup.POST("")
+		patientGroup.POST("", controller.CreatePatient)
 	}
 }

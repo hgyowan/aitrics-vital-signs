@@ -29,7 +29,7 @@ func (p *patientService) CreatePatient(ctx context.Context, request patient.Crea
 		CreatedAt: now,
 		UpdatedAt: &now,
 	}); err != nil {
-		return pkgError.Wrap(err)
+		return pkgError.WrapWithCode(err, pkgError.Create)
 	}
 
 	return nil
