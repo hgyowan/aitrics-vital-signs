@@ -25,6 +25,8 @@ import (
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+
+	_ "aitrics-vital-signs/api-server/docs"
 )
 
 // @title Vital Signs API
