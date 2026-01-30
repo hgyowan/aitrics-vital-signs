@@ -11,7 +11,7 @@ const (
 )
 
 var (
-	ServerName  = getEnv("SERVER_NAME", "")
+	ServerName  = getEnv("SERVER_NAME", "aitrics-vital-signs")
 	ServiceType = getEnv("SERVICE_TYPE", "dev") // prd / stg / dev
 	ServerPort  = getEnv("SERVER_PORT", "8080")
 
