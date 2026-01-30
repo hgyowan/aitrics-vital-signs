@@ -1,5 +1,16 @@
 # 1단계 - 환자 정보 수정 API 구현 (Optimistic Lock 적용)
 
+## 💬 대화 내용 요약
+
+### 사용자 요청
+1. **초기 요청**: 프로젝트의 모든 CLAUDE.md 파일 확인 후, 환자 정보 수정 API 구현
+   - 기존 환자 등록 API 코드를 참고하여 동일한 패턴으로 구현
+   - Optimistic Lock 적용 필수
+
+2. **추가 요청사항**:
+   - `FindByPatientID` → `FindPatientByID`로 메서드명 변경 (객체를 명시)
+   - 동시성 테스트 작성 요청 (Optimistic Lock 검증)
+
 ## 작업 개요
 AITRICS 과제 요구사항 2-1-(2) 환자 정보 수정 API 구현
 - **Endpoint**: PUT /api/v1/patients/{patient_id}

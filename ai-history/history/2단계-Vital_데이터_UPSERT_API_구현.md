@@ -1,5 +1,19 @@
 # 2단계 - Vital 데이터 저장/수정 API 구현 (UPSERT with Optimistic Lock)
 
+## 💬 대화 내용 요약
+
+### 사용자 요청
+1. **초기 요청**: 기능 요구사항 2-2 Vital 데이터 API 구현
+   - Endpoint: POST /api/v1/vitals (UPSERT)
+   - 복합 식별자: (patient_id, recorded_at, vital_type)
+   - Optimistic Lock 적용 필수
+
+2. **추가 요청사항**:
+   - `RecordedAt`을 time.Time 타입으로 받기 (string 파싱 불필요)
+   - `FindVitalByCompositeKey` → `FindVitalByPatientIDAndRecordedAtAndVitalType`로 변경 (모든 키 컬럼 명시)
+   - ai-history/history에 2단계 내용 기록 (누락하지 말 것)
+   - **Service와 Controller의 테스트 코드 작성 필수** (항상 테스트 코드 작성)
+
 ## 작업 개요
 AITRICS 과제 요구사항 2-2-(1) Vital 데이터 저장/수정 API 구현
 - **Endpoint**: POST /api/v1/vitals
