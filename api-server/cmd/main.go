@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"aitrics-vital-signs/api-server/app/controller"
