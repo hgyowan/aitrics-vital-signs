@@ -17,6 +17,7 @@ const (
 
 	WrongParam Code = 400001
 	Conflict   Code = 400002
+	NotFound   Code = 400003
 )
 
 var businessCodeMap = map[Code]Status{
@@ -28,4 +29,5 @@ var businessCodeMap = map[Code]Status{
 	Get:        {int(Get), http.StatusInternalServerError, "fail to get data", nil, nil},
 	WrongParam: {int(WrongParam), http.StatusBadRequest, "wrong parameter", nil, nil},
 	Conflict:   {int(Conflict), http.StatusConflict, "conflict data", nil, nil},
+	NotFound:   {int(NotFound), http.StatusNotFound, "not found data", nil, nil},
 }

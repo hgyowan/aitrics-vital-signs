@@ -31,7 +31,7 @@ func (p *patientService) CreatePatient(ctx context.Context, request patient.Crea
 		CreatedAt: now,
 		UpdatedAt: &now,
 	}); err != nil {
-		return pkgError.WrapWithCode(err, pkgError.Create)
+		return pkgError.Wrap(err)
 	}
 
 	return nil
@@ -45,7 +45,7 @@ func (p *patientService) UpdatePatient(ctx context.Context, patientID string, re
 
 	existingPatient, err := p.repo.FindPatientByID(ctx, patientID)
 	if err != nil {
-		return pkgError.WrapWithCode(err, pkgError.Get)
+		return pkgError.Wrap(err)
 	}
 
 	if existingPatient.Version != request.Version {
@@ -60,7 +60,7 @@ func (p *patientService) UpdatePatient(ctx context.Context, patientID string, re
 	existingPatient.UpdatedAt = &now
 
 	if err := p.repo.UpdatePatient(ctx, existingPatient); err != nil {
-		return pkgError.WrapWithCode(err, pkgError.Update)
+		return pkgError.Wrap(err)
 	}
 
 	return nil

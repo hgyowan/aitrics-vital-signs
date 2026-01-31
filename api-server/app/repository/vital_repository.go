@@ -5,7 +5,10 @@ import (
 	"aitrics-vital-signs/api-server/domain/vital"
 	pkgError "aitrics-vital-signs/library/error"
 	"context"
+	"errors"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type vitalRepository struct {
@@ -17,7 +20,10 @@ func (v *vitalRepository) FindVitalByPatientIDAndRecordedAtAndVitalType(ctx cont
 	if err := v.externalGormClient.MySQL().WithContext(ctx).
 		Where("patient_id = ? AND recorded_at = ? AND vital_type = ?", patientID, recordedAt, vitalType).
 		First(&result).Error; err != nil {
-		return nil, pkgError.Wrap(err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, pkgError.WrapWithCode(err, pkgError.NotFound)
+		}
+		return nil, pkgError.WrapWithCode(err, pkgError.Get)
 	}
 	return &result, nil
 }
@@ -33,14 +39,14 @@ func (v *vitalRepository) FindVitalsByPatientIDAndDateRange(ctx context.Context,
 	}
 
 	if err := query.Order("recorded_at ASC").Find(&results).Error; err != nil {
-		return nil, pkgError.Wrap(err)
+		return nil, pkgError.WrapWithCode(err, pkgError.Get)
 	}
 
 	return results, nil
 }
 
 func (v *vitalRepository) CreateVital(ctx context.Context, model *vital.Vital) error {
-	return pkgError.Wrap(v.externalGormClient.MySQL().WithContext(ctx).Create(model).Error)
+	return pkgError.WrapWithCode(v.externalGormClient.MySQL().WithContext(ctx).Create(model).Error, pkgError.Create)
 }
 
 func (v *vitalRepository) UpdateVital(ctx context.Context, model *vital.Vital) error {
@@ -58,7 +64,7 @@ func (v *vitalRepository) UpdateVital(ctx context.Context, model *vital.Vital) e
 		})
 
 	if result.Error != nil {
-		return pkgError.Wrap(result.Error)
+		return pkgError.WrapWithCode(result.Error, pkgError.Update)
 	}
 
 	// RowsAffected가 0이면 version conflict

@@ -12,7 +12,7 @@ type patientRepository struct {
 }
 
 func (p *patientRepository) CreatePatient(ctx context.Context, model *patient.Patient) error {
-	return pkgError.Wrap(p.externalGormClient.MySQL().WithContext(ctx).Create(model).Error)
+	return pkgError.WrapWithCode(p.externalGormClient.MySQL().WithContext(ctx).Create(model).Error, pkgError.Create)
 }
 
 func (p *patientRepository) FindPatientByID(ctx context.Context, patientID string) (*patient.Patient, error) {
@@ -20,7 +20,7 @@ func (p *patientRepository) FindPatientByID(ctx context.Context, patientID strin
 	if err := p.externalGormClient.MySQL().WithContext(ctx).
 		Where("patient_id = ?", patientID).
 		First(&result).Error; err != nil {
-		return nil, pkgError.Wrap(err)
+		return nil, pkgError.WrapWithCode(err, pkgError.Get)
 	}
 	return &result, nil
 }
@@ -43,7 +43,7 @@ func (p *patientRepository) UpdatePatient(ctx context.Context, model *patient.Pa
 		})
 
 	if result.Error != nil {
-		return pkgError.Wrap(result.Error)
+		return pkgError.WrapWithCode(result.Error, pkgError.Update)
 	}
 
 	// RowsAffected가 0이면 version conflict

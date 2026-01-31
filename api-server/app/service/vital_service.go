@@ -41,14 +41,14 @@ func (v *vitalService) UpsertVital(ctx context.Context, request vital.UpsertVita
 				CreatedAt:  now,
 				UpdatedAt:  &now,
 			}); err != nil {
-				return pkgError.WrapWithCode(err, pkgError.Create)
+				return pkgError.Wrap(err)
 			}
 
 			return nil
 		}
 
 		// 다른 에러는 그대로 반환
-		return pkgError.WrapWithCode(err, pkgError.Get)
+		return pkgError.Wrap(err)
 	}
 
 	// 존재하면 UPDATE (Optimistic Lock 적용)
@@ -61,11 +61,7 @@ func (v *vitalService) UpsertVital(ctx context.Context, request vital.UpsertVita
 	existingVital.UpdatedAt = &now
 
 	if err := v.repo.UpdateVital(ctx, existingVital); err != nil {
-		// Repository에서 이미 Conflict 에러를 반환하는 경우 그대로 전달
-		if pkgError.CompareBusinessError(err, pkgError.Conflict) {
-			return err
-		}
-		return pkgError.WrapWithCode(err, pkgError.Update)
+		return pkgError.Wrap(err)
 	}
 
 	return nil
@@ -81,7 +77,7 @@ func (v *vitalService) GetVitalsByPatientIDAndDateRange(ctx context.Context, req
 		request.VitalType,
 	)
 	if err != nil {
-		return nil, pkgError.WrapWithCode(err, pkgError.Get)
+		return nil, pkgError.Wrap(err)
 	}
 
 	// Response 변환

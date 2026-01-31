@@ -5,8 +5,8 @@ import (
 	"aitrics-vital-signs/api-server/domain/mock"
 	"aitrics-vital-signs/api-server/domain/vital"
 	"aitrics-vital-signs/api-server/pkg/constant"
-	pkgError "aitrics-vital-signs/library/error"
 	"aitrics-vital-signs/library/envs"
+	pkgError "aitrics-vital-signs/library/error"
 	"context"
 	"testing"
 	"time"
@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	mockVitalRepo  *mock.MockVitalRepository
-	inferenceSvc   inference.InferenceService
+	mockVitalRepo *mock.MockVitalRepository
+	inferenceSvc  inference.InferenceService
 )
 
 func beforeEachInference(t *testing.T) {
@@ -32,11 +32,11 @@ func Test_CalculateVitalRisk(t *testing.T) {
 	now := time.Now().UTC()
 
 	tests := []struct {
-		name              string
-		req               inference.VitalRiskRequest
-		setupMock         func()
-		wantErr           bool
-		expectedRiskLevel string
+		name               string
+		req                inference.VitalRiskRequest
+		setupMock          func()
+		wantErr            bool
+		expectedRiskLevel  string
 		expectedRulesCount int
 	}{
 		{
@@ -47,14 +47,14 @@ func Test_CalculateVitalRisk(t *testing.T) {
 			setupMock: func() {
 				vitals := []vital.Vital{
 					// HR > 120 (평균: 130)
-					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeHR, Value: 125.0, Version: 1},
-					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeHR, Value: 135.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeHR.String(), Value: 125.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeHR.String(), Value: 135.0, Version: 1},
 					// SBP < 90 (평균: 85)
-					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 82.0, Version: 1},
-					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 88.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSBP.String(), Value: 82.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSBP.String(), Value: 88.0, Version: 1},
 					// SpO2 < 90 (평균: 87)
-					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 85.0, Version: 1},
-					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 89.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 85.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 89.0, Version: 1},
 				}
 				mockVitalRepo.EXPECT().
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", gomock.Any(), gomock.Any(), "").
@@ -65,8 +65,8 @@ func Test_CalculateVitalRisk(t *testing.T) {
 						return vitals, nil
 					})
 			},
-			wantErr:           false,
-			expectedRiskLevel: "HIGH",
+			wantErr:            false,
+			expectedRiskLevel:  "HIGH",
 			expectedRulesCount: 3,
 		},
 		{
@@ -77,21 +77,21 @@ func Test_CalculateVitalRisk(t *testing.T) {
 			setupMock: func() {
 				vitals := []vital.Vital{
 					// HR > 120 (평균: 130)
-					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeHR, Value: 125.0, Version: 1},
-					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeHR, Value: 135.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeHR.String(), Value: 125.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeHR.String(), Value: 135.0, Version: 1},
 					// SBP 정상 (평균: 115)
-					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 110.0, Version: 1},
-					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 120.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSBP.String(), Value: 110.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSBP.String(), Value: 120.0, Version: 1},
 					// SpO2 < 90 (평균: 87)
-					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 85.0, Version: 1},
-					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 89.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 85.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 89.0, Version: 1},
 				}
 				mockVitalRepo.EXPECT().
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", gomock.Any(), gomock.Any(), "").
 					Return(vitals, nil)
 			},
-			wantErr:           false,
-			expectedRiskLevel: "MEDIUM",
+			wantErr:            false,
+			expectedRiskLevel:  "MEDIUM",
 			expectedRulesCount: 2,
 		},
 		{
@@ -102,21 +102,21 @@ func Test_CalculateVitalRisk(t *testing.T) {
 			setupMock: func() {
 				vitals := []vital.Vital{
 					// HR > 120 (평균: 130)
-					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeHR, Value: 125.0, Version: 1},
-					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeHR, Value: 135.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeHR.String(), Value: 125.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeHR.String(), Value: 135.0, Version: 1},
 					// SBP 정상 (평균: 115)
-					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 110.0, Version: 1},
-					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 120.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSBP.String(), Value: 110.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSBP.String(), Value: 120.0, Version: 1},
 					// SpO2 정상 (평균: 97)
-					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 95.0, Version: 1},
-					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 99.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 95.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 99.0, Version: 1},
 				}
 				mockVitalRepo.EXPECT().
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", gomock.Any(), gomock.Any(), "").
 					Return(vitals, nil)
 			},
-			wantErr:           false,
-			expectedRiskLevel: "MEDIUM",
+			wantErr:            false,
+			expectedRiskLevel:  "MEDIUM",
 			expectedRulesCount: 1,
 		},
 		{
@@ -127,21 +127,21 @@ func Test_CalculateVitalRisk(t *testing.T) {
 			setupMock: func() {
 				vitals := []vital.Vital{
 					// HR 정상 (평균: 80)
-					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeHR, Value: 75.0, Version: 1},
-					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeHR, Value: 85.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeHR.String(), Value: 75.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeHR.String(), Value: 85.0, Version: 1},
 					// SBP 정상 (평균: 115)
-					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 110.0, Version: 1},
-					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 120.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSBP.String(), Value: 110.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSBP.String(), Value: 120.0, Version: 1},
 					// SpO2 정상 (평균: 97)
-					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 95.0, Version: 1},
-					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 99.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 95.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 99.0, Version: 1},
 				}
 				mockVitalRepo.EXPECT().
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", gomock.Any(), gomock.Any(), "").
 					Return(vitals, nil)
 			},
-			wantErr:           false,
-			expectedRiskLevel: "LOW",
+			wantErr:            false,
+			expectedRiskLevel:  "LOW",
 			expectedRulesCount: 0,
 		},
 		{
@@ -154,8 +154,8 @@ func Test_CalculateVitalRisk(t *testing.T) {
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P99999999", gomock.Any(), gomock.Any(), "").
 					Return([]vital.Vital{}, nil)
 			},
-			wantErr:           false,
-			expectedRiskLevel: "LOW",
+			wantErr:            false,
+			expectedRiskLevel:  "LOW",
 			expectedRulesCount: 0,
 		},
 		{

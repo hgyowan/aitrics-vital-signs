@@ -4,8 +4,8 @@ import (
 	"aitrics-vital-signs/api-server/domain/inference"
 	"aitrics-vital-signs/api-server/domain/vital"
 	"aitrics-vital-signs/api-server/pkg/constant"
-	pkgError "aitrics-vital-signs/library/error"
 	"aitrics-vital-signs/library/envs"
+	pkgError "aitrics-vital-signs/library/error"
 	"context"
 	"time"
 )
@@ -33,7 +33,7 @@ func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request infer
 	vitalData := make(map[string][]float64)
 	for _, v := range vitals {
 		// HR, SBP, SpO2만 처리
-		if v.VitalType == constant.VitalTypeHR || v.VitalType == constant.VitalTypeSBP || v.VitalType == constant.VitalTypeSpO2 {
+		if v.VitalType == constant.VitalTypeHR.String() || v.VitalType == constant.VitalTypeSBP.String() || v.VitalType == constant.VitalTypeSpO2.String() {
 			vitalData[v.VitalType] = append(vitalData[v.VitalType], v.Value)
 		}
 	}
@@ -54,17 +54,17 @@ func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request infer
 	var triggeredRules []string
 
 	// HR > 120
-	if avg, exists := vitalAverages[constant.VitalTypeHR]; exists && avg > 120 {
+	if avg, exists := vitalAverages[constant.VitalTypeHR.String()]; exists && avg > 120 {
 		triggeredRules = append(triggeredRules, "HR > 120")
 	}
 
 	// SBP < 90
-	if avg, exists := vitalAverages[constant.VitalTypeSBP]; exists && avg < 90 {
+	if avg, exists := vitalAverages[constant.VitalTypeSBP.String()]; exists && avg < 90 {
 		triggeredRules = append(triggeredRules, "SBP < 90")
 	}
 
 	// SpO2 < 90
-	if avg, exists := vitalAverages[constant.VitalTypeSpO2]; exists && avg < 90 {
+	if avg, exists := vitalAverages[constant.VitalTypeSpO2.String()]; exists && avg < 90 {
 		triggeredRules = append(triggeredRules, "SpO2 < 90")
 	}
 
