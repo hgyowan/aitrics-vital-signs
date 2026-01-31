@@ -170,10 +170,10 @@ func Test_UpdatePatient(t *testing.T) {
 			setupMock: func() {
 				mockRepository.EXPECT().
 					FindPatientByID(gomock.Any(), "P99999999").
-					Return(nil, gorm.ErrRecordNotFound)
+					Return(nil, pkgError.WrapWithCode(gorm.ErrRecordNotFound, pkgError.NotFound))
 			},
 			wantErr:     true,
-			expectedErr: pkgError.WrapWithCode(gorm.ErrRecordNotFound, pkgError.Get),
+			expectedErr: pkgError.WrapWithCode(gorm.ErrRecordNotFound, pkgError.NotFound),
 		},
 		{
 			name:      "실패 - 날짜 파라미터 포멧 에러",
@@ -202,8 +202,8 @@ func Test_UpdatePatient(t *testing.T) {
 				if tt.expectedErr != nil {
 					if pkgError.CompareBusinessError(tt.expectedErr, pkgError.Conflict) {
 						require.True(t, pkgError.CompareBusinessError(err, pkgError.Conflict))
-					} else if pkgError.CompareBusinessError(tt.expectedErr, pkgError.Get) {
-						require.True(t, pkgError.CompareBusinessError(err, pkgError.Get))
+					} else if pkgError.CompareBusinessError(tt.expectedErr, pkgError.NotFound) {
+						require.True(t, pkgError.CompareBusinessError(err, pkgError.NotFound))
 					}
 				}
 			} else {

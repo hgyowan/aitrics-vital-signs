@@ -5,6 +5,9 @@ import (
 	"aitrics-vital-signs/api-server/domain/patient"
 	pkgError "aitrics-vital-signs/library/error"
 	"context"
+	"errors"
+
+	"gorm.io/gorm"
 )
 
 type patientRepository struct {
@@ -20,6 +23,9 @@ func (p *patientRepository) FindPatientByID(ctx context.Context, patientID strin
 	if err := p.externalGormClient.MySQL().WithContext(ctx).
 		Where("patient_id = ?", patientID).
 		First(&result).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, pkgError.WrapWithCode(err, pkgError.NotFound)
+		}
 		return nil, pkgError.WrapWithCode(err, pkgError.Get)
 	}
 	return &result, nil
