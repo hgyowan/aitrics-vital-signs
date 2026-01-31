@@ -11,7 +11,7 @@ import (
 )
 
 type inferenceService struct {
-	vitalRepo vital.VitalRepository
+	vitalService vital.VitalService
 }
 
 func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request inference.VitalRiskRequest) (*inference.VitalRiskResponse, error) {
@@ -24,14 +24,19 @@ func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request infer
 	to := now
 
 	// Vital 데이터 조회 (HR, SBP, SpO2만 조회)
-	vitals, err := i.vitalRepo.FindVitalsByPatientIDAndDateRange(ctx, request.PatientID, from, to, "")
+	vitals, err := i.vitalService.GetVitalsByPatientIDAndDateRange(ctx, vital.GetVitalsRequest{
+		PatientID: request.PatientID,
+		From:      from,
+		To:        to,
+		VitalType: "",
+	})
 	if err != nil {
 		return nil, pkgError.WrapWithCode(err, pkgError.Get)
 	}
 
 	// 각 Vital Type별로 데이터 수집
 	vitalData := make(map[string][]float64)
-	for _, v := range vitals {
+	for _, v := range vitals.Items {
 		// HR, SBP, SpO2만 처리
 		if v.VitalType == constant.VitalTypeHR.String() || v.VitalType == constant.VitalTypeSBP.String() || v.VitalType == constant.VitalTypeSpO2.String() {
 			vitalData[v.VitalType] = append(vitalData[v.VitalType], v.Value)
@@ -82,7 +87,7 @@ func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request infer
 		RiskLevel:          riskLevel,
 		TriggeredRules:     triggeredRules,
 		VitalAverages:      vitalAverages,
-		DataPointsAnalyzed: len(vitals),
+		DataPointsAnalyzed: len(vitals.Items),
 		TimeRange: inference.TimeRange{
 			From: from,
 			To:   to,
@@ -91,8 +96,8 @@ func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request infer
 	}, nil
 }
 
-func NewInferenceService(vitalRepo vital.VitalRepository) inference.InferenceService {
+func NewInferenceService(vitalService vital.VitalService) inference.InferenceService {
 	return &inferenceService{
-		vitalRepo: vitalRepo,
+		vitalService: vitalService,
 	}
 }

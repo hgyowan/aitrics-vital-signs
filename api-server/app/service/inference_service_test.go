@@ -36,6 +36,7 @@ func Test_CalculateVitalRisk(t *testing.T) {
 		req                inference.VitalRiskRequest
 		setupMock          func()
 		wantErr            bool
+		expectedErr        error
 		expectedRiskLevel  string
 		expectedRulesCount int
 	}{
@@ -168,7 +169,8 @@ func Test_CalculateVitalRisk(t *testing.T) {
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", gomock.Any(), gomock.Any(), "").
 					Return(nil, pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Get, "db error"))
 			},
-			wantErr: true,
+			wantErr:     true,
+			expectedErr: pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Get),
 		},
 	}
 
@@ -183,6 +185,11 @@ func Test_CalculateVitalRisk(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				require.Nil(t, result)
+				if tt.expectedErr != nil {
+					expectedBE, _ := pkgError.CastBusinessError(tt.expectedErr)
+					actualBE, _ := pkgError.CastBusinessError(err)
+					require.Equal(t, expectedBE.Status.Code, actualBE.Status.Code)
+				}
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, result)

@@ -5,8 +5,6 @@ import (
 	pkgError "aitrics-vital-signs/library/error"
 	"context"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type vitalService struct {
@@ -26,7 +24,7 @@ func (v *vitalService) UpsertVital(ctx context.Context, request vital.UpsertVita
 
 	// 존재하지 않으면 INSERT
 	if err != nil {
-		if err.Error() == gorm.ErrRecordNotFound.Error() || pkgError.CompareBusinessError(err, pkgError.Get) {
+		if pkgError.CompareBusinessError(err, pkgError.NotFound) {
 			// INSERT: version은 1부터 시작
 			if request.Version != 1 {
 				return pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.WrongParam, "version must be 1 for new record")

@@ -3,6 +3,7 @@ package repository
 import (
 	"aitrics-vital-signs/api-server/domain/mock"
 	"aitrics-vital-signs/api-server/domain/vital"
+	pkgError "aitrics-vital-signs/library/error"
 	"context"
 	"testing"
 	"time"
@@ -38,12 +39,13 @@ func beforeEachVital(t *testing.T) {
 
 func Test_FindVitalByPatientIDAndRecordedAtAndVitalType(t *testing.T) {
 	tests := []struct {
-		name       string
-		patientID  string
-		recordedAt time.Time
-		vitalType  string
-		setupMock  func()
-		wantErr    bool
+		name        string
+		patientID   string
+		recordedAt  time.Time
+		vitalType   string
+		setupMock   func()
+		wantErr     bool
+		expectedErr error
 	}{
 		{
 			name:       "성공 - Vital 조회",
@@ -53,7 +55,7 @@ func Test_FindVitalByPatientIDAndRecordedAtAndVitalType(t *testing.T) {
 			setupMock: func() {
 				rows := sqlmock.NewRows([]string{"patient_id", "recorded_at", "vital_type", "value", "version", "created_at"}).
 					AddRow("P00001234", time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC), "HR", 110.0, 1, time.Now().UTC())
-				vitalSQLMock.ExpectQuery("SELECT .*FROM .*vitals.* WHERE patient_id = .* AND recorded_at = .* AND vital_type = .*").
+				vitalSQLMock.ExpectQuery("SELECT .* FROM .*vitals.*").
 					WithArgs("P00001234", time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC), "HR", 1).
 					WillReturnRows(rows)
 			},
@@ -65,11 +67,12 @@ func Test_FindVitalByPatientIDAndRecordedAtAndVitalType(t *testing.T) {
 			recordedAt: time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC),
 			vitalType:  "HR",
 			setupMock: func() {
-				vitalSQLMock.ExpectQuery("SELECT .*FROM .*vitals.* WHERE patient_id = .* AND recorded_at = .* AND vital_type = .*").
+				vitalSQLMock.ExpectQuery("SELECT .* FROM .*vitals.*").
 					WithArgs("P99999999", time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC), "HR", 1).
 					WillReturnError(gorm.ErrRecordNotFound)
 			},
-			wantErr: true,
+			wantErr:     true,
+			expectedErr: pkgError.WrapWithCode(gorm.ErrRecordNotFound, pkgError.NotFound),
 		},
 	}
 
@@ -83,6 +86,11 @@ func Test_FindVitalByPatientIDAndRecordedAtAndVitalType(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				require.Nil(t, result)
+				if tt.expectedErr != nil {
+					expectedBE, _ := pkgError.CastBusinessError(tt.expectedErr)
+					actualBE, _ := pkgError.CastBusinessError(err)
+					require.Equal(t, expectedBE.Status.Code, actualBE.Status.Code)
+				}
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, result)

@@ -78,13 +78,17 @@ func (p *patientService) GetPatientVitals(ctx context.Context, patientID string,
 		return nil, pkgError.WrapWithCode(err, pkgError.WrongParam, "invalid to date format")
 	}
 
-	// Vital Service를 통해 데이터 조회
-	return p.vitalService.GetVitalsByPatientIDAndDateRange(ctx, vital.GetVitalsRequest{
+	vitals, err := p.vitalService.GetVitalsByPatientIDAndDateRange(ctx, vital.GetVitalsRequest{
 		PatientID: patientID,
 		From:      from,
 		To:        to,
 		VitalType: request.VitalType,
 	})
+	if err != nil {
+		return nil, pkgError.Wrap(err)
+	}
+
+	return vitals, nil
 }
 
 func NewPatientService(repo patient.PatientRepository, vitalService vital.VitalService) patient.PatientService {

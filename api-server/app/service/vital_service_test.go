@@ -10,7 +10,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"gorm.io/gorm"
 )
 
 var (
@@ -30,10 +29,11 @@ func Test_UpsertVital_Insert(t *testing.T) {
 	recordedAt := time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC)
 
 	tests := []struct {
-		name      string
-		req       vital.UpsertVitalRequest
-		setupMock func()
-		wantErr   bool
+		name        string
+		req         vital.UpsertVitalRequest
+		setupMock   func()
+		wantErr     bool
+		expectedErr error
 	}{
 		{
 			name: "성공 - INSERT (새 데이터)",
@@ -49,7 +49,7 @@ func Test_UpsertVital_Insert(t *testing.T) {
 				mockVitalRepository.EXPECT().
 					FindVitalByPatientIDAndRecordedAtAndVitalType(
 						gomock.Any(), "P00001234", recordedAt, "HR").
-					Return(nil, gorm.ErrRecordNotFound)
+					Return(nil, pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.NotFound))
 
 				// CreateVital 호출
 				mockVitalRepository.EXPECT().
@@ -80,9 +80,10 @@ func Test_UpsertVital_Insert(t *testing.T) {
 				mockVitalRepository.EXPECT().
 					FindVitalByPatientIDAndRecordedAtAndVitalType(
 						gomock.Any(), "P00001234", recordedAt, "HR").
-					Return(nil, gorm.ErrRecordNotFound)
+					Return(nil, pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.NotFound))
 			},
-			wantErr: true,
+			wantErr:     true,
+			expectedErr: pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.WrongParam),
 		},
 	}
 
@@ -96,6 +97,11 @@ func Test_UpsertVital_Insert(t *testing.T) {
 
 			if tt.wantErr {
 				require.Error(t, err)
+				if tt.expectedErr != nil {
+					expectedBE, _ := pkgError.CastBusinessError(tt.expectedErr)
+					actualBE, _ := pkgError.CastBusinessError(err)
+					require.Equal(t, expectedBE.Status.Code, actualBE.Status.Code)
+				}
 			} else {
 				require.NoError(t, err)
 			}
@@ -244,11 +250,12 @@ func Test_GetVitalsByPatientIDAndDateRange(t *testing.T) {
 	to := time.Date(2025, 12, 1, 12, 0, 0, 0, time.UTC)
 
 	tests := []struct {
-		name      string
-		req       vital.GetVitalsRequest
-		setupMock func()
-		wantErr   bool
-		wantCount int
+		name        string
+		req         vital.GetVitalsRequest
+		setupMock   func()
+		wantErr     bool
+		expectedErr error
+		wantCount   int
 	}{
 		{
 			name: "성공 - vital_type 있을 때",
@@ -350,7 +357,8 @@ func Test_GetVitalsByPatientIDAndDateRange(t *testing.T) {
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", from, to, "HR").
 					Return(nil, pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Get, "db error"))
 			},
-			wantErr: true,
+			wantErr:     true,
+			expectedErr: pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Get),
 		},
 	}
 
@@ -365,6 +373,11 @@ func Test_GetVitalsByPatientIDAndDateRange(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				require.Nil(t, result)
+				if tt.expectedErr != nil {
+					expectedBE, _ := pkgError.CastBusinessError(tt.expectedErr)
+					actualBE, _ := pkgError.CastBusinessError(err)
+					require.Equal(t, expectedBE.Status.Code, actualBE.Status.Code)
+				}
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, result)

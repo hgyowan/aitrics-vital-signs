@@ -32,9 +32,10 @@ func Test_CreatePatient(t *testing.T) {
 	beforeEach(t)
 
 	tests := []struct {
-		name    string
-		req     patient.CreatePatientRequest
-		wantErr bool
+		name        string
+		req         patient.CreatePatientRequest
+		wantErr     bool
+		expectedErr error
 	}{
 		{
 			name: "성공",
@@ -54,7 +55,8 @@ func Test_CreatePatient(t *testing.T) {
 				Gender:    "M",
 				BirthDate: "19900101",
 			},
-			wantErr: true,
+			wantErr:     true,
+			expectedErr: pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.WrongParam),
 		},
 	}
 
@@ -78,6 +80,11 @@ func Test_CreatePatient(t *testing.T) {
 
 			if tt.wantErr {
 				require.Error(t, err)
+				if tt.expectedErr != nil {
+					expectedBE, _ := pkgError.CastBusinessError(tt.expectedErr)
+					actualBE, _ := pkgError.CastBusinessError(err)
+					require.Equal(t, expectedBE.Status.Code, actualBE.Status.Code)
+				}
 			} else {
 				require.NoError(t, err)
 			}
@@ -215,11 +222,12 @@ func Test_UpdatePatient(t *testing.T) {
 
 func Test_GetPatientVitals(t *testing.T) {
 	tests := []struct {
-		name      string
-		patientID string
-		req       patient.GetPatientVitalsQueryRequest
-		setupMock func()
-		wantErr   bool
+		name        string
+		patientID   string
+		req         patient.GetPatientVitalsQueryRequest
+		setupMock   func()
+		wantErr     bool
+		expectedErr error
 	}{
 		{
 			name:      "성공 - vital_type 있을 때",
@@ -292,8 +300,9 @@ func Test_GetPatientVitals(t *testing.T) {
 				To:        "2025-12-01T12:00:00Z",
 				VitalType: "HR",
 			},
-			setupMock: func() {},
-			wantErr:   true,
+			setupMock:   func() {},
+			wantErr:     true,
+			expectedErr: pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.WrongParam),
 		},
 		{
 			name:      "실패 - 잘못된 to 날짜 형식",
@@ -303,8 +312,9 @@ func Test_GetPatientVitals(t *testing.T) {
 				To:        "2025-12-01 12:00:00",
 				VitalType: "HR",
 			},
-			setupMock: func() {},
-			wantErr:   true,
+			setupMock:   func() {},
+			wantErr:     true,
+			expectedErr: pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.WrongParam),
 		},
 		{
 			name:      "실패 - Vital Service 에러",
@@ -319,7 +329,8 @@ func Test_GetPatientVitals(t *testing.T) {
 					GetVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
 					Return(nil, pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Get, "db error"))
 			},
-			wantErr: true,
+			wantErr:     true,
+			expectedErr: pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Get),
 		},
 	}
 
@@ -334,7 +345,12 @@ func Test_GetPatientVitals(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				require.Nil(t, result)
-			} else {
+				if tt.expectedErr != nil {
+					expectedBE, _ := pkgError.CastBusinessError(tt.expectedErr)
+					actualBE, _ := pkgError.CastBusinessError(err)
+					require.Equal(t, expectedBE.Status.Code, actualBE.Status.Code)
+				}
+			} else{
 				require.NoError(t, err)
 				require.NotNil(t, result)
 				require.Equal(t, tt.patientID, result.PatientID)

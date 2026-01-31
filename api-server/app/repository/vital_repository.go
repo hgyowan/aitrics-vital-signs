@@ -38,7 +38,7 @@ func (v *vitalRepository) FindVitalsByPatientIDAndDateRange(ctx context.Context,
 		query = query.Where("vital_type = ?", vitalType)
 	}
 
-	if err := query.Order("recorded_at ASC").Find(&results).Error; err != nil {
+	if err := query.Order("recorded_at DESC").Find(&results).Error; err != nil {
 		return nil, pkgError.WrapWithCode(err, pkgError.Get)
 	}
 

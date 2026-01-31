@@ -3,6 +3,7 @@ package repository
 import (
 	"aitrics-vital-signs/api-server/domain/mock"
 	"aitrics-vital-signs/api-server/domain/patient"
+	pkgError "aitrics-vital-signs/library/error"
 	"context"
 	"testing"
 	"time"
@@ -58,10 +59,11 @@ func Test_CreatePatient(t *testing.T) {
 
 func Test_FindPatientByID(t *testing.T) {
 	tests := []struct {
-		name      string
-		patientID string
-		setupMock func()
-		wantErr   bool
+		name        string
+		patientID   string
+		setupMock   func()
+		wantErr     bool
+		expectedErr error
 	}{
 		{
 			name:      "성공 - 환자 조회",
@@ -69,7 +71,7 @@ func Test_FindPatientByID(t *testing.T) {
 			setupMock: func() {
 				rows := sqlmock.NewRows([]string{"id", "patient_id", "name", "gender", "birth_date", "version", "created_at"}).
 					AddRow(uuid.NewString(), "P00001234", "홍길동", "M", time.Now().UTC(), 1, time.Now().UTC())
-				sqlMock.ExpectQuery("SELECT .*FROM .*patients.* WHERE patient_id = .*").
+				sqlMock.ExpectQuery("SELECT .* FROM .*patients.*").
 					WithArgs("P00001234", 1).
 					WillReturnRows(rows)
 			},
@@ -79,11 +81,12 @@ func Test_FindPatientByID(t *testing.T) {
 			name:      "실패 - 환자 없음",
 			patientID: "P99999999",
 			setupMock: func() {
-				sqlMock.ExpectQuery("SELECT .*FROM .*patients.* WHERE patient_id = .*").
+				sqlMock.ExpectQuery("SELECT .* FROM .*patients.*").
 					WithArgs("P99999999", 1).
 					WillReturnError(gorm.ErrRecordNotFound)
 			},
-			wantErr: true,
+			wantErr:     true,
+			expectedErr: pkgError.WrapWithCode(gorm.ErrRecordNotFound, pkgError.NotFound),
 		},
 	}
 
@@ -97,6 +100,11 @@ func Test_FindPatientByID(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err)
 				require.Nil(t, result)
+				if tt.expectedErr != nil {
+					expectedBE, _ := pkgError.CastBusinessError(tt.expectedErr)
+					actualBE, _ := pkgError.CastBusinessError(err)
+					require.Equal(t, expectedBE.Status.Code, actualBE.Status.Code)
+				}
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, result)
