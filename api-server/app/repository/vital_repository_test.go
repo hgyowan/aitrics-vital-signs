@@ -136,3 +136,88 @@ func Test_UpdateVital(t *testing.T) {
 	err := vitalRepo.UpdateVital(context.Background(), updateModel)
 	require.NoError(t, err)
 }
+
+func Test_FindVitalsByPatientIDAndDateRange(t *testing.T) {
+	from := time.Date(2025, 12, 1, 10, 0, 0, 0, time.UTC)
+	to := time.Date(2025, 12, 1, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name      string
+		patientID string
+		from      time.Time
+		to        time.Time
+		vitalType string
+		setupMock func()
+		wantCount int
+		wantErr   bool
+	}{
+		{
+			name:      "성공 - vital_type 있을 때 해당 타입만 조회",
+			patientID: "P00001234",
+			from:      from,
+			to:        to,
+			vitalType: "HR",
+			setupMock: func() {
+				rows := sqlmock.NewRows([]string{"patient_id", "recorded_at", "vital_type", "value", "version", "created_at"}).
+					AddRow("P00001234", time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC), "HR", 110.0, 1, time.Now().UTC()).
+					AddRow("P00001234", time.Date(2025, 12, 1, 11, 15, 0, 0, time.UTC), "HR", 115.0, 1, time.Now().UTC())
+				vitalSQLMock.ExpectQuery("SELECT .* FROM .*vitals.* WHERE .* ORDER BY recorded_at").
+					WithArgs("P00001234", from, to, "HR").
+					WillReturnRows(rows)
+			},
+			wantCount: 2,
+			wantErr:   false,
+		},
+		{
+			name:      "성공 - vital_type 없을 때 모든 타입 조회",
+			patientID: "P00001234",
+			from:      from,
+			to:        to,
+			vitalType: "",
+			setupMock: func() {
+				rows := sqlmock.NewRows([]string{"patient_id", "recorded_at", "vital_type", "value", "version", "created_at"}).
+					AddRow("P00001234", time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC), "HR", 110.0, 1, time.Now().UTC()).
+					AddRow("P00001234", time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC), "RR", 20.0, 1, time.Now().UTC()).
+					AddRow("P00001234", time.Date(2025, 12, 1, 11, 15, 0, 0, time.UTC), "HR", 115.0, 1, time.Now().UTC())
+				vitalSQLMock.ExpectQuery("SELECT .* FROM .*vitals.* WHERE .* ORDER BY recorded_at").
+					WithArgs("P00001234", from, to).
+					WillReturnRows(rows)
+			},
+			wantCount: 3,
+			wantErr:   false,
+		},
+		{
+			name:      "성공 - 조회 결과 없음",
+			patientID: "P99999999",
+			from:      from,
+			to:        to,
+			vitalType: "HR",
+			setupMock: func() {
+				rows := sqlmock.NewRows([]string{"patient_id", "recorded_at", "vital_type", "value", "version", "created_at"})
+				vitalSQLMock.ExpectQuery("SELECT .* FROM .*vitals.* WHERE .* ORDER BY recorded_at").
+					WithArgs("P99999999", from, to, "HR").
+					WillReturnRows(rows)
+			},
+			wantCount: 0,
+			wantErr:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			beforeEachVital(t)
+			tt.setupMock()
+
+			results, err := vitalRepo.FindVitalsByPatientIDAndDateRange(context.Background(), tt.patientID, tt.from, tt.to, tt.vitalType)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				require.Nil(t, results)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, results)
+				require.Equal(t, tt.wantCount, len(results))
+			}
+		})
+	}
+}

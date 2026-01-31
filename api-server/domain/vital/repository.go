@@ -8,6 +8,7 @@ import (
 
 type VitalRepository interface {
 	FindVitalByPatientIDAndRecordedAtAndVitalType(ctx context.Context, patientID string, recordedAt time.Time, vitalType string) (*Vital, error)
+	FindVitalsByPatientIDAndDateRange(ctx context.Context, patientID string, from time.Time, to time.Time, vitalType string) ([]Vital, error)
 	CreateVital(ctx context.Context, model *Vital) error
 	UpdateVital(ctx context.Context, model *Vital) error
 }

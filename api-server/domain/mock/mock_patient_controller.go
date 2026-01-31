@@ -52,6 +52,18 @@ func (mr *MockPatientControllerMockRecorder) CreatePatient(ctx any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePatient", reflect.TypeOf((*MockPatientController)(nil).CreatePatient), ctx)
 }
 
+// GetPatientVitals mocks base method.
+func (m *MockPatientController) GetPatientVitals(ctx *gin.Context) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "GetPatientVitals", ctx)
+}
+
+// GetPatientVitals indicates an expected call of GetPatientVitals.
+func (mr *MockPatientControllerMockRecorder) GetPatientVitals(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPatientVitals", reflect.TypeOf((*MockPatientController)(nil).GetPatientVitals), ctx)
+}
+
 // UpdatePatient mocks base method.
 func (m *MockPatientController) UpdatePatient(ctx *gin.Context) {
 	m.ctrl.T.Helper()

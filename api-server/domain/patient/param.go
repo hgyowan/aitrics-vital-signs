@@ -13,3 +13,9 @@ type UpdatePatientRequest struct {
 	BirthDate string `json:"birthDate" binding:"required,datetime=2006-01-02"`
 	Version   int    `json:"version" binding:"required,min=1"`
 }
+
+type GetPatientVitalsQueryRequest struct {
+	From      string `form:"from" binding:"required"`       // RFC3339 format
+	To        string `form:"to" binding:"required"`         // RFC3339 format
+	VitalType string `form:"vital_type" binding:"omitempty,oneof=HR RR SBP DBP SpO2 BT"`
+}

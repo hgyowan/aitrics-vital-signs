@@ -2,6 +2,7 @@ package service
 
 import (
 	"aitrics-vital-signs/api-server/domain/patient"
+	"aitrics-vital-signs/api-server/domain/vital"
 	pkgError "aitrics-vital-signs/library/error"
 	"context"
 	"time"
@@ -10,7 +11,8 @@ import (
 )
 
 type patientService struct {
-	repo patient.PatientRepository
+	repo         patient.PatientRepository
+	vitalService vital.VitalService
 }
 
 func (p *patientService) CreatePatient(ctx context.Context, request patient.CreatePatientRequest) error {
@@ -64,6 +66,30 @@ func (p *patientService) UpdatePatient(ctx context.Context, patientID string, re
 	return nil
 }
 
-func NewPatientService(repo patient.PatientRepository) patient.PatientService {
-	return &patientService{repo}
+func (p *patientService) GetPatientVitals(ctx context.Context, patientID string, request patient.GetPatientVitalsQueryRequest) (*vital.GetVitalsResponse, error) {
+	// Query Parameter 날짜 파싱
+	from, err := time.Parse(time.RFC3339, request.From)
+	if err != nil {
+		return nil, pkgError.WrapWithCode(err, pkgError.WrongParam, "invalid from date format")
+	}
+
+	to, err := time.Parse(time.RFC3339, request.To)
+	if err != nil {
+		return nil, pkgError.WrapWithCode(err, pkgError.WrongParam, "invalid to date format")
+	}
+
+	// Vital Service를 통해 데이터 조회
+	return p.vitalService.GetVitalsByPatientIDAndDateRange(ctx, vital.GetVitalsRequest{
+		PatientID: patientID,
+		From:      from,
+		To:        to,
+		VitalType: request.VitalType,
+	})
+}
+
+func NewPatientService(repo patient.PatientRepository, vitalService vital.VitalService) patient.PatientService {
+	return &patientService{
+		repo:         repo,
+		vitalService: vitalService,
+	}
 }

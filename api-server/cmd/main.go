@@ -63,15 +63,16 @@ func main() {
 	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	dbClient := external.MustExternalDB()
-	patientRepository := repository.NewPatientRepository(dbClient)
-	patientService := service.NewPatientService(patientRepository)
-	patientController := controller.NewPatientController(patientService)
-	router.NewPatientRouter(engine, patientController)
 
 	vitalRepository := repository.NewVitalRepository(dbClient)
 	vitalService := service.NewVitalService(vitalRepository)
 	vitalController := controller.NewVitalController(vitalService)
 	router.NewVitalRouter(engine, vitalController)
+
+	patientRepository := repository.NewPatientRepository(dbClient)
+	patientService := service.NewPatientService(patientRepository, vitalService)
+	patientController := controller.NewPatientController(patientService)
+	router.NewPatientRouter(engine, patientController)
 
 	s := &http.Server{
 		Addr:    fmt.Sprintf(":%s", envs.ServerPort),

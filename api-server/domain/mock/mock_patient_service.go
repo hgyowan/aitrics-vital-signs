@@ -11,6 +11,7 @@ package mock
 
 import (
 	patient "aitrics-vital-signs/api-server/domain/patient"
+	vital "aitrics-vital-signs/api-server/domain/vital"
 	context "context"
 	reflect "reflect"
 
@@ -53,6 +54,21 @@ func (m *MockPatientService) CreatePatient(ctx context.Context, request patient.
 func (mr *MockPatientServiceMockRecorder) CreatePatient(ctx, request any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePatient", reflect.TypeOf((*MockPatientService)(nil).CreatePatient), ctx, request)
+}
+
+// GetPatientVitals mocks base method.
+func (m *MockPatientService) GetPatientVitals(ctx context.Context, patientID string, request patient.GetPatientVitalsQueryRequest) (*vital.GetVitalsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPatientVitals", ctx, patientID, request)
+	ret0, _ := ret[0].(*vital.GetVitalsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPatientVitals indicates an expected call of GetPatientVitals.
+func (mr *MockPatientServiceMockRecorder) GetPatientVitals(ctx, patientID, request any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPatientVitals", reflect.TypeOf((*MockPatientService)(nil).GetPatientVitals), ctx, patientID, request)
 }
 
 // UpdatePatient mocks base method.

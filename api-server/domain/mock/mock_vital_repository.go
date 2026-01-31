@@ -71,6 +71,21 @@ func (mr *MockVitalRepositoryMockRecorder) FindVitalByPatientIDAndRecordedAtAndV
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindVitalByPatientIDAndRecordedAtAndVitalType", reflect.TypeOf((*MockVitalRepository)(nil).FindVitalByPatientIDAndRecordedAtAndVitalType), ctx, patientID, recordedAt, vitalType)
 }
 
+// FindVitalsByPatientIDAndDateRange mocks base method.
+func (m *MockVitalRepository) FindVitalsByPatientIDAndDateRange(ctx context.Context, patientID string, from, to time.Time, vitalType string) ([]vital.Vital, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindVitalsByPatientIDAndDateRange", ctx, patientID, from, to, vitalType)
+	ret0, _ := ret[0].([]vital.Vital)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindVitalsByPatientIDAndDateRange indicates an expected call of FindVitalsByPatientIDAndDateRange.
+func (mr *MockVitalRepositoryMockRecorder) FindVitalsByPatientIDAndDateRange(ctx, patientID, from, to, vitalType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindVitalsByPatientIDAndDateRange", reflect.TypeOf((*MockVitalRepository)(nil).FindVitalsByPatientIDAndDateRange), ctx, patientID, from, to, vitalType)
+}
+
 // UpdateVital mocks base method.
 func (m *MockVitalRepository) UpdateVital(ctx context.Context, model *vital.Vital) error {
 	m.ctrl.T.Helper()

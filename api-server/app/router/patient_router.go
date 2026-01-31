@@ -15,5 +15,6 @@ func NewPatientRouter(engine *gin.Engine, controller patient.PatientController) 
 	{
 		patientGroup.POST("", controller.CreatePatient)
 		patientGroup.PUT("/:patient_id", controller.UpdatePatient)
+		patientGroup.GET("/:patient_id/vitals", controller.GetPatientVitals)
 	}
 }

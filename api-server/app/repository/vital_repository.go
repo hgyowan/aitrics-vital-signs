@@ -22,6 +22,23 @@ func (v *vitalRepository) FindVitalByPatientIDAndRecordedAtAndVitalType(ctx cont
 	return &result, nil
 }
 
+func (v *vitalRepository) FindVitalsByPatientIDAndDateRange(ctx context.Context, patientID string, from time.Time, to time.Time, vitalType string) ([]vital.Vital, error) {
+	var results []vital.Vital
+	query := v.externalGormClient.MySQL().WithContext(ctx).
+		Where("patient_id = ? AND recorded_at >= ? AND recorded_at <= ?", patientID, from, to)
+
+	// vitalType이 있으면 해당 타입만 필터링
+	if vitalType != "" {
+		query = query.Where("vital_type = ?", vitalType)
+	}
+
+	if err := query.Order("recorded_at ASC").Find(&results).Error; err != nil {
+		return nil, pkgError.Wrap(err)
+	}
+
+	return results, nil
+}
+
 func (v *vitalRepository) CreateVital(ctx context.Context, model *vital.Vital) error {
 	return pkgError.Wrap(v.externalGormClient.MySQL().WithContext(ctx).Create(model).Error)
 }

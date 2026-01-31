@@ -41,6 +41,21 @@ func (m *MockVitalService) EXPECT() *MockVitalServiceMockRecorder {
 	return m.recorder
 }
 
+// GetVitalsByPatientIDAndDateRange mocks base method.
+func (m *MockVitalService) GetVitalsByPatientIDAndDateRange(ctx context.Context, request vital.GetVitalsRequest) (*vital.GetVitalsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVitalsByPatientIDAndDateRange", ctx, request)
+	ret0, _ := ret[0].(*vital.GetVitalsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVitalsByPatientIDAndDateRange indicates an expected call of GetVitalsByPatientIDAndDateRange.
+func (mr *MockVitalServiceMockRecorder) GetVitalsByPatientIDAndDateRange(ctx, request any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVitalsByPatientIDAndDateRange", reflect.TypeOf((*MockVitalService)(nil).GetVitalsByPatientIDAndDateRange), ctx, request)
+}
+
 // UpsertVital mocks base method.
 func (m *MockVitalService) UpsertVital(ctx context.Context, request vital.UpsertVitalRequest) error {
 	m.ctrl.T.Helper()

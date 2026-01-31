@@ -3,6 +3,7 @@ package service
 import (
 	"aitrics-vital-signs/api-server/domain/mock"
 	"aitrics-vital-signs/api-server/domain/patient"
+	"aitrics-vital-signs/api-server/domain/vital"
 	pkgError "aitrics-vital-signs/library/error"
 	"context"
 	"testing"
@@ -15,14 +16,16 @@ import (
 )
 
 var (
-	mockRepository *mock.MockPatientRepository
-	svc            patient.PatientService
+	mockRepository   *mock.MockPatientRepository
+	mockVitalService *mock.MockVitalService
+	svc              patient.PatientService
 )
 
 func beforeEach(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockRepository = mock.NewMockPatientRepository(ctrl)
-	svc = NewPatientService(mockRepository)
+	mockVitalService = mock.NewMockVitalService(ctrl)
+	svc = NewPatientService(mockRepository, mockVitalService)
 }
 
 func Test_CreatePatient(t *testing.T) {
@@ -205,6 +208,136 @@ func Test_UpdatePatient(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func Test_GetPatientVitals(t *testing.T) {
+	tests := []struct {
+		name      string
+		patientID string
+		req       patient.GetPatientVitalsQueryRequest
+		setupMock func()
+		wantErr   bool
+	}{
+		{
+			name:      "성공 - vital_type 있을 때",
+			patientID: "P00001234",
+			req: patient.GetPatientVitalsQueryRequest{
+				From:      "2025-12-01T10:00:00Z",
+				To:        "2025-12-01T12:00:00Z",
+				VitalType: "HR",
+			},
+			setupMock: func() {
+				expectedResponse := &vital.GetVitalsResponse{
+					PatientID: "P00001234",
+					Items: []vital.VitalItemResponse{
+						{
+							VitalType:  "HR",
+							RecordedAt: time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC),
+							Value:      110.0,
+						},
+					},
+				}
+				mockVitalService.EXPECT().
+					GetVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, req vital.GetVitalsRequest) (*vital.GetVitalsResponse, error) {
+						require.Equal(t, "P00001234", req.PatientID)
+						require.Equal(t, "HR", req.VitalType)
+						return expectedResponse, nil
+					})
+			},
+			wantErr: false,
+		},
+		{
+			name:      "성공 - vital_type 없을 때 (모든 타입)",
+			patientID: "P00001234",
+			req: patient.GetPatientVitalsQueryRequest{
+				From:      "2025-12-01T10:00:00Z",
+				To:        "2025-12-01T12:00:00Z",
+				VitalType: "",
+			},
+			setupMock: func() {
+				expectedResponse := &vital.GetVitalsResponse{
+					PatientID: "P00001234",
+					Items: []vital.VitalItemResponse{
+						{
+							VitalType:  "HR",
+							RecordedAt: time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC),
+							Value:      110.0,
+						},
+						{
+							VitalType:  "RR",
+							RecordedAt: time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC),
+							Value:      20.0,
+						},
+					},
+				}
+				mockVitalService.EXPECT().
+					GetVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, req vital.GetVitalsRequest) (*vital.GetVitalsResponse, error) {
+						require.Equal(t, "P00001234", req.PatientID)
+						require.Equal(t, "", req.VitalType)
+						return expectedResponse, nil
+					})
+			},
+			wantErr: false,
+		},
+		{
+			name:      "실패 - 잘못된 from 날짜 형식",
+			patientID: "P00001234",
+			req: patient.GetPatientVitalsQueryRequest{
+				From:      "2025-12-01 10:00:00",
+				To:        "2025-12-01T12:00:00Z",
+				VitalType: "HR",
+			},
+			setupMock: func() {},
+			wantErr:   true,
+		},
+		{
+			name:      "실패 - 잘못된 to 날짜 형식",
+			patientID: "P00001234",
+			req: patient.GetPatientVitalsQueryRequest{
+				From:      "2025-12-01T10:00:00Z",
+				To:        "2025-12-01 12:00:00",
+				VitalType: "HR",
+			},
+			setupMock: func() {},
+			wantErr:   true,
+		},
+		{
+			name:      "실패 - Vital Service 에러",
+			patientID: "P00001234",
+			req: patient.GetPatientVitalsQueryRequest{
+				From:      "2025-12-01T10:00:00Z",
+				To:        "2025-12-01T12:00:00Z",
+				VitalType: "HR",
+			},
+			setupMock: func() {
+				mockVitalService.EXPECT().
+					GetVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
+					Return(nil, pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Get, "db error"))
+			},
+			wantErr: true,
+		},
+	}
+
+	ctx := context.Background()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			beforeEach(t)
+			tt.setupMock()
+
+			result, err := svc.GetPatientVitals(ctx, tt.patientID, tt.req)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				require.Nil(t, result)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, result)
+				require.Equal(t, tt.patientID, result.PatientID)
 			}
 		})
 	}
