@@ -56,7 +56,7 @@ func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request infer
 	}
 
 	// 위험 조건 평가
-	var triggeredRules []string
+	triggeredRules := make([]string, 0, len(internalVital.RiskRules))
 
 	// 정의해둔 조건대로 rules 계산 및 추가
 	for _, rule := range internalVital.RiskRules {
