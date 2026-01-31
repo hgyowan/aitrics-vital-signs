@@ -1,0 +1,220 @@
+package service
+
+import (
+	"aitrics-vital-signs/api-server/domain/inference"
+	"aitrics-vital-signs/api-server/domain/mock"
+	"aitrics-vital-signs/api-server/domain/vital"
+	"aitrics-vital-signs/api-server/pkg/constant"
+	pkgError "aitrics-vital-signs/library/error"
+	"aitrics-vital-signs/library/envs"
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
+)
+
+var (
+	mockVitalRepo  *mock.MockVitalRepository
+	inferenceSvc   inference.InferenceService
+)
+
+func beforeEachInference(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockVitalRepo = mock.NewMockVitalRepository(ctrl)
+	inferenceSvc = NewInferenceService(mockVitalRepo)
+}
+
+func Test_CalculateVitalRisk(t *testing.T) {
+	// envs.VitalRiskTimeWindowHours 기본값(24시간) 사용
+	// 환경변수는 패키지 초기화 시점에 로드되므로 테스트 실행 전 설정 필요
+	now := time.Now().UTC()
+
+	tests := []struct {
+		name              string
+		req               inference.VitalRiskRequest
+		setupMock         func()
+		wantErr           bool
+		expectedRiskLevel string
+		expectedRulesCount int
+	}{
+		{
+			name: "성공 - HIGH 위험 (모든 조건 충족)",
+			req: inference.VitalRiskRequest{
+				PatientID: "P00001234",
+			},
+			setupMock: func() {
+				vitals := []vital.Vital{
+					// HR > 120 (평균: 130)
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeHR, Value: 125.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeHR, Value: 135.0, Version: 1},
+					// SBP < 90 (평균: 85)
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 82.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 88.0, Version: 1},
+					// SpO2 < 90 (평균: 87)
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 85.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 89.0, Version: 1},
+				}
+				mockVitalRepo.EXPECT().
+					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", gomock.Any(), gomock.Any(), "").
+					DoAndReturn(func(_ context.Context, patientID string, fromTime, toTime time.Time, vitalType string) ([]vital.Vital, error) {
+						// 시간 범위 검증
+						require.True(t, fromTime.Before(toTime))
+						require.True(t, toTime.Sub(fromTime) == 24*time.Hour)
+						return vitals, nil
+					})
+			},
+			wantErr:           false,
+			expectedRiskLevel: "HIGH",
+			expectedRulesCount: 3,
+		},
+		{
+			name: "성공 - MEDIUM 위험 (2개 조건 충족)",
+			req: inference.VitalRiskRequest{
+				PatientID: "P00001234",
+			},
+			setupMock: func() {
+				vitals := []vital.Vital{
+					// HR > 120 (평균: 130)
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeHR, Value: 125.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeHR, Value: 135.0, Version: 1},
+					// SBP 정상 (평균: 115)
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 110.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 120.0, Version: 1},
+					// SpO2 < 90 (평균: 87)
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 85.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 89.0, Version: 1},
+				}
+				mockVitalRepo.EXPECT().
+					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", gomock.Any(), gomock.Any(), "").
+					Return(vitals, nil)
+			},
+			wantErr:           false,
+			expectedRiskLevel: "MEDIUM",
+			expectedRulesCount: 2,
+		},
+		{
+			name: "성공 - MEDIUM 위험 (1개 조건 충족)",
+			req: inference.VitalRiskRequest{
+				PatientID: "P00001234",
+			},
+			setupMock: func() {
+				vitals := []vital.Vital{
+					// HR > 120 (평균: 130)
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeHR, Value: 125.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeHR, Value: 135.0, Version: 1},
+					// SBP 정상 (평균: 115)
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 110.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 120.0, Version: 1},
+					// SpO2 정상 (평균: 97)
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 95.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 99.0, Version: 1},
+				}
+				mockVitalRepo.EXPECT().
+					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", gomock.Any(), gomock.Any(), "").
+					Return(vitals, nil)
+			},
+			wantErr:           false,
+			expectedRiskLevel: "MEDIUM",
+			expectedRulesCount: 1,
+		},
+		{
+			name: "성공 - LOW 위험 (조건 충족 없음)",
+			req: inference.VitalRiskRequest{
+				PatientID: "P00001234",
+			},
+			setupMock: func() {
+				vitals := []vital.Vital{
+					// HR 정상 (평균: 80)
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeHR, Value: 75.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeHR, Value: 85.0, Version: 1},
+					// SBP 정상 (평균: 115)
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 110.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSBP, Value: 120.0, Version: 1},
+					// SpO2 정상 (평균: 97)
+					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 95.0, Version: 1},
+					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2, Value: 99.0, Version: 1},
+				}
+				mockVitalRepo.EXPECT().
+					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", gomock.Any(), gomock.Any(), "").
+					Return(vitals, nil)
+			},
+			wantErr:           false,
+			expectedRiskLevel: "LOW",
+			expectedRulesCount: 0,
+		},
+		{
+			name: "성공 - 데이터 없음 (LOW)",
+			req: inference.VitalRiskRequest{
+				PatientID: "P99999999",
+			},
+			setupMock: func() {
+				mockVitalRepo.EXPECT().
+					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P99999999", gomock.Any(), gomock.Any(), "").
+					Return([]vital.Vital{}, nil)
+			},
+			wantErr:           false,
+			expectedRiskLevel: "LOW",
+			expectedRulesCount: 0,
+		},
+		{
+			name: "실패 - Repository 에러",
+			req: inference.VitalRiskRequest{
+				PatientID: "P00001234",
+			},
+			setupMock: func() {
+				mockVitalRepo.EXPECT().
+					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", gomock.Any(), gomock.Any(), "").
+					Return(nil, pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Get, "db error"))
+			},
+			wantErr: true,
+		},
+	}
+
+	ctx := context.Background()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			beforeEachInference(t)
+			tt.setupMock()
+
+			result, err := inferenceSvc.CalculateVitalRisk(ctx, tt.req)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				require.Nil(t, result)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, result)
+				require.Equal(t, tt.req.PatientID, result.PatientID)
+				require.Equal(t, tt.expectedRiskLevel, result.RiskLevel)
+				require.Equal(t, tt.expectedRulesCount, len(result.TriggeredRules))
+				require.NotNil(t, result.TimeRange)
+				require.NotNil(t, result.EvaluatedAt)
+			}
+		})
+	}
+}
+
+func Test_CalculateVitalRisk_EnvironmentVariable(t *testing.T) {
+	// 환경변수 테스트
+	// envs.VitalRiskTimeWindowHours는 패키지 초기화 시점에 로드됨
+	// 테스트 실행 전 VITAL_RISK_TIME_WINDOW_HOURS 환경변수를 설정해야 함
+	// 기본값은 24시간
+	beforeEachInference(t)
+
+	timeWindow := envs.VitalRiskTimeWindowHours
+	mockVitalRepo.EXPECT().
+		FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", gomock.Any(), gomock.Any(), "").
+		DoAndReturn(func(_ context.Context, patientID string, fromTime, toTime time.Time, vitalType string) ([]vital.Vital, error) {
+			// 환경변수에 설정된 시간 범위인지 확인
+			require.True(t, toTime.Sub(fromTime) == time.Duration(timeWindow)*time.Hour)
+			return []vital.Vital{}, nil
+		})
+
+	req := inference.VitalRiskRequest{PatientID: "P00001234"}
+	result, err := inferenceSvc.CalculateVitalRisk(context.Background(), req)
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+}

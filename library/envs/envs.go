@@ -2,6 +2,7 @@ package envs
 
 import (
 	"os"
+	"strconv"
 )
 
 const (
@@ -24,6 +25,8 @@ var (
 	DBPassword = getEnv("DB_PASSWORD", "")
 
 	Token = getEnv("TOKEN", "")
+
+	VitalRiskTimeWindowHours = getEnvAsInt("VITAL_RISK_TIME_WINDOW_HOURS", 24)
 )
 
 func getEnv(envName, defaultVal string) string {
@@ -32,4 +35,15 @@ func getEnv(envName, defaultVal string) string {
 		envVal = defaultVal
 	}
 	return envVal
+}
+
+func getEnvAsInt(envName string, defaultVal int) int {
+	envVal := os.Getenv(envName)
+	if envVal == "" {
+		return defaultVal
+	}
+	if intVal, err := strconv.Atoi(envVal); err == nil && intVal > 0 {
+		return intVal
+	}
+	return defaultVal
 }
