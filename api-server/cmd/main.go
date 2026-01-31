@@ -33,7 +33,7 @@ import (
 // @version 1.0
 // @description Vital Signs Backend API
 // @host localhost:8080
-// @BasePath /v1
+// @BasePath /api
 
 // @securityDefinitions.apikey BearerAuth
 // @in header

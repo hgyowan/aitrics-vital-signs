@@ -2,6 +2,8 @@ package external
 
 import (
 	"aitrics-vital-signs/api-server/domain"
+	"aitrics-vital-signs/api-server/domain/patient"
+	"aitrics-vital-signs/api-server/domain/vital"
 	"aitrics-vital-signs/library/envs"
 	pkgLogger "aitrics-vital-signs/library/logger"
 	"fmt"
@@ -47,6 +49,10 @@ func MustExternalDB() domain.ExternalDBClient {
 	sqlDB.SetMaxOpenConns(maxOpenConnNum)
 	sqlDB.SetMaxIdleConns(maxIdleConnNum)
 	sqlDB.SetConnMaxLifetime(connMaxLifetime)
+
+	if err := db.AutoMigrate(patient.Patient{}, vital.Vital{}); err != nil {
+		pkgLogger.ZapLogger.Logger.Sugar().Fatalf("failed to migrate database: %v", err)
+	}
 
 	pkgLogger.ZapLogger.Logger.Info("MySQL connection established successfully!")
 
