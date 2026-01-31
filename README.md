@@ -1,6 +1,13 @@
 # Aitrics Vital Signs Project
 
-Aitrics Vital Signs 프로젝트에 오신 것을 환영합니다. 이 프로젝트는 환자의 바이탈 데이터를 관리하고 분석하는 API 서버입니다.
+## 과제 진행 순서
+1. 도메인 파악 및 패키지 구조 설계
+2. Claude Code 에게 명령 전 환자 등록 API 를 참고용으로 사용할 수 있도록 코드 작성
+3. 각 패키지 하위 CLAUDE.md 작성
+4. 추가되는 API 는 Claude Code 에게 각 패키지 하위의 CLAUDE.md 를 보고 개발하도록 명령 (진행 상황은 단계별로 ai-history/history 디렉토리 하위에 자동 저장하도록 명령)
+5. 코드 디테일 수정
+6. Dockerfile, composes file 작성
+7. README 작성
 
 ## 🏗 프로젝트 패키지 구조
 
