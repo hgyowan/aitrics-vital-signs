@@ -3,6 +3,7 @@ package service
 import (
 	"aitrics-vital-signs/api-server/domain/inference"
 	"aitrics-vital-signs/api-server/domain/vital"
+	internalVital "aitrics-vital-signs/api-server/internal/vital"
 	"aitrics-vital-signs/api-server/pkg/constant"
 	"aitrics-vital-signs/library/envs"
 	pkgError "aitrics-vital-signs/library/error"
@@ -57,19 +58,19 @@ func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request infer
 	// 위험 조건 평가
 	var triggeredRules []string
 
-	// HR > 120
-	if avg, exists := vitalAverages[constant.VitalTypeHR.String()]; exists && avg > 120 {
-		triggeredRules = append(triggeredRules, fmt.Sprintf("%s > 120", constant.VitalTypeHR.String()))
-	}
+	// 정의해둔 조건대로 rules 계산 및 추가
+	for _, rule := range internalVital.RiskRules {
+		avg, exists := vitalAverages[rule.VitalType]
+		if !exists {
+			continue
+		}
 
-	// SBP < 90
-	if avg, exists := vitalAverages[constant.VitalTypeSBP.String()]; exists && avg < 90 {
-		triggeredRules = append(triggeredRules, fmt.Sprintf("%s < 90", constant.VitalTypeSBP.String()))
-	}
-
-	// SpO2 < 90
-	if avg, exists := vitalAverages[constant.VitalTypeSpO2.String()]; exists && avg < 90 {
-		triggeredRules = append(triggeredRules, fmt.Sprintf("%s < 90", constant.VitalTypeSpO2.String()))
+		if internalVital.EvaluateRule(avg, rule) {
+			triggeredRules = append(
+				triggeredRules,
+				fmt.Sprintf("%s %s %.0f", rule.VitalType, rule.Comparator, rule.Threshold),
+			)
+		}
 	}
 
 	// risk_level 결정
