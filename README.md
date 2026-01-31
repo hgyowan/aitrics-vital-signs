@@ -41,31 +41,39 @@ Go 개발 환경에서 코드를 직접 수정하며 테스트할 때 사용합�
 * **방법**: `api-server/example.env` 파일의 설정을 참고하여 환경 변수를 구성한 후 아래 명령어를 수행합니다.
 ```bash
 cd api-server
-cp example.env .env
 go run cmd/main.go
 ```
 
 ### 3. 테스트 코드 실행
-본 프로젝트는 코드 커버리지 70% 이상을 만족하도록 구성되었습니다. 각 도메인별로 테스트를 수행할 수 있습니다.
+본 프로젝트는 코드 커버리지 70% 이상을 만족하도록 구성되었습니다.
+테스트 수행을 위해 **반드시 `api-server` 디렉토리로 이동**해야 합니다.
+
+```bash
+cd api-server
+```
 
 * **Patient 도메인 테스트**
 ```bash
-go test ./app/controller/patient_controller_test.go ./app/service/patient_service_test.go ./app/repository/patient_repository_test.go ./app/router/patient_router_test.go
+# api-server 디렉토리로 이동 후 실행
+cd api-server && go test ./app/... -v -run Patient
 ```
 
 * **Vital 도메인 테스트**
 ```bash
-go test ./app/controller/vital_controller_test.go ./app/service/vital_service_test.go ./app/repository/vital_repository_test.go
+# api-server 디렉토리로 이동 후 실행
+cd api-server && go test ./app/... -v -run Vital
 ```
 
 * **Inference 도메인 테스트**
 ```bash
-go test ./app/controller/inference_controller_test.go ./app/service/inference_service_test.go
+# api-server 디렉토리로 이동 후 실행 (Risk 계산 관련 테스트 수행)
+cd api-server && go test ./app/... -v -run Risk
 ```
 
 * **전체 테스트 실행**
 ```bash
-go test ./...
+# api-server 디렉토리로 이동 후 실행
+cd api-server && go test ./...
 ```
 
 ## 📖 API 문서 (Swagger)
@@ -74,9 +82,10 @@ go test ./...
 * **Swagger URL**: [https://localhost:8080/swagger/index.html](https://localhost:8080/swagger/index.html)
 
 ## 🗄 데이터베이스 설계 (DDL)
+![img.png](img.png)
 
 데이터베이스 테이블 정의서는 아래 경로에서 확인할 수 있습니다.
-* **Path**: [`api-server/ddl/aitrics_table.sql`](file:///Users/hwang-gyowan/go/src/aitrics-vital-signs/api-server/ddl/aitrics_table.sql)
+* **Path**: api-server/ddl/aitrics_table.sql
 
 > [!NOTE]
 > `vitals` 테이블의 `patient_id`는 논리적으로 `patients` 테이블과 외래키(Foreign Key) 관계에 있지만, 실제 운영상의 데이터 관리 편의성과 유연성을 위하여 물리적인 외래키 제약 조건은 맺지 않았습니다.
@@ -111,5 +120,9 @@ go test ./...
          |                        |<---(6) Conflict! ---- |
          |                        | (DB Version is 2)     |
 ```
-*상세 로직은 [`api-server/app/service/vital_service.go`](file:///Users/hwang-gyowan/go/src/aitrics-vital-signs/api-server/app/service/vital_service.go)를 참고하세요.*
-AITRICS BE Senior 채용 과제 진행을 위한 프로젝트
+*상세 로직은 api-server/app/service/vital_service.go 를 참고하세요.*
+
+## AI Agent 활용 기록
+- ai-history/AITRICS.md 의 내용을 참고하도록 하였습니다.
+- ai-history/history 에 CLAUDE 사용에대한 전반적인 내용이 기록되어 있습니다.
+- api-server 하위 각 디렉토리에 CLAUDE.md 를 지정하고 각 레이어에 대한 코드 생성 규칙을 정의하였습니다.
