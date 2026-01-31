@@ -35,7 +35,7 @@ import (
 // @host localhost:8080
 // @BasePath /api
 
-// @securityDefinitions.apikey BearerAuth
+// @securityDefinitions.apikey Bearer
 // @in header
 // @name Authorization
 func main() {
@@ -69,7 +69,7 @@ func main() {
 
 	patientService := service.NewPatientService(patientRepository, vitalRepository)
 	vitalService := service.NewVitalService(vitalRepository, patientRepository)
-	inferenceService := service.NewInferenceService(vitalRepository)
+	inferenceService := service.NewInferenceService(vitalRepository, patientRepository)
 
 	patientController := controller.NewPatientController(patientService)
 	vitalController := controller.NewVitalController(vitalService)

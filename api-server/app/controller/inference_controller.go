@@ -13,6 +13,7 @@ type inferenceController struct {
 }
 
 // CalculateVitalRisk
+// @Security Bearer
 // @Title CalculateVitalRisk
 // @Description Vital 데이터 기반 위험 스코어 계산
 // @Tags V1 - Inference

@@ -3,6 +3,7 @@ package service
 import (
 	"aitrics-vital-signs/api-server/domain/inference"
 	"aitrics-vital-signs/api-server/domain/mock"
+	"aitrics-vital-signs/api-server/domain/patient"
 	"aitrics-vital-signs/api-server/domain/vital"
 	"aitrics-vital-signs/api-server/pkg/constant"
 	"aitrics-vital-signs/library/envs"
@@ -23,7 +24,8 @@ var (
 func beforeEachInference(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockVitalRepo = mock.NewMockVitalRepository(ctrl)
-	inferenceSvc = NewInferenceService(mockVitalRepo)
+	mockPatientRepository = mock.NewMockPatientRepository(ctrl)
+	inferenceSvc = NewInferenceService(mockVitalRepo, mockPatientRepository)
 }
 
 func Test_CalculateVitalRisk(t *testing.T) {
@@ -57,6 +59,12 @@ func Test_CalculateVitalRisk(t *testing.T) {
 					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 85.0, Version: 1},
 					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 89.0, Version: 1},
 				}
+				mockPatientRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P00001234").
+					Return(&patient.Patient{
+						PatientID: "P00001234",
+					}, nil)
+
 				mockVitalRepo.EXPECT().
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
 					DoAndReturn(func(_ context.Context, param vital.FindVitalsByPatientIDAndDateRangeParam) ([]vital.Vital, error) {
@@ -87,6 +95,12 @@ func Test_CalculateVitalRisk(t *testing.T) {
 					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 85.0, Version: 1},
 					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 89.0, Version: 1},
 				}
+				mockPatientRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P00001234").
+					Return(&patient.Patient{
+						PatientID: "P00001234",
+					}, nil)
+
 				mockVitalRepo.EXPECT().
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
 					Return(vitals, nil)
@@ -112,6 +126,12 @@ func Test_CalculateVitalRisk(t *testing.T) {
 					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 95.0, Version: 1},
 					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 99.0, Version: 1},
 				}
+				mockPatientRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P00001234").
+					Return(&patient.Patient{
+						PatientID: "P00001234",
+					}, nil)
+
 				mockVitalRepo.EXPECT().
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
 					Return(vitals, nil)
@@ -137,6 +157,12 @@ func Test_CalculateVitalRisk(t *testing.T) {
 					{PatientID: "P00001234", RecordedAt: now.Add(-1 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 95.0, Version: 1},
 					{PatientID: "P00001234", RecordedAt: now.Add(-2 * time.Hour), VitalType: constant.VitalTypeSpO2.String(), Value: 99.0, Version: 1},
 				}
+				mockPatientRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P00001234").
+					Return(&patient.Patient{
+						PatientID: "P00001234",
+					}, nil)
+
 				mockVitalRepo.EXPECT().
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
 					Return(vitals, nil)
@@ -151,6 +177,12 @@ func Test_CalculateVitalRisk(t *testing.T) {
 				PatientID: "P99999999",
 			},
 			setupMock: func() {
+				mockPatientRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P99999999").
+					Return(&patient.Patient{
+						PatientID: "P99999999",
+					}, nil)
+
 				mockVitalRepo.EXPECT().
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
 					Return([]vital.Vital{}, nil)
@@ -165,6 +197,12 @@ func Test_CalculateVitalRisk(t *testing.T) {
 				PatientID: "P00001234",
 			},
 			setupMock: func() {
+				mockPatientRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P00001234").
+					Return(&patient.Patient{
+						PatientID: "P00001234",
+					}, nil)
+
 				mockVitalRepo.EXPECT().
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
 					Return(nil, pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Get, "db error"))
@@ -211,6 +249,12 @@ func Test_CalculateVitalRisk_EnvironmentVariable(t *testing.T) {
 	beforeEachInference(t)
 
 	timeWindow := envs.VitalRiskTimeWindowHours
+	mockPatientRepository.EXPECT().
+		FindPatientByID(gomock.Any(), "P00001234").
+		Return(&patient.Patient{
+			PatientID: "P00001234",
+		}, nil)
+	
 	mockVitalRepo.EXPECT().
 		FindVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, param vital.FindVitalsByPatientIDAndDateRangeParam) ([]vital.Vital, error) {

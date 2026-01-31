@@ -13,6 +13,7 @@ type vitalController struct {
 }
 
 // UpsertVital
+// @Security Bearer
 // @Title UpsertVital
 // @Description Vital 데이터 저장/수정 (UPSERT, Optimistic Lock 적용)
 // @Tags V1 - Vital

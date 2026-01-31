@@ -13,6 +13,7 @@ type patientController struct {
 }
 
 // CreatePatient
+// @Security Bearer
 // @Title CreatePatient
 // @Description 환자 등록
 // @Tags V1 - Patient
@@ -39,6 +40,7 @@ func (p *patientController) CreatePatient(ctx *gin.Context) {
 }
 
 // UpdatePatient
+// @Security Bearer
 // @Title UpdatePatient
 // @Description 환자 정보 수정
 // @Tags V1 - Patient
@@ -73,6 +75,7 @@ func (p *patientController) UpdatePatient(ctx *gin.Context) {
 }
 
 // GetPatientVitals
+// @Security Bearer
 // @Title GetPatientVitals
 // @Description 환자 Vital 데이터 조회
 // @Tags V1 - Patient

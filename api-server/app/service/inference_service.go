@@ -2,6 +2,7 @@ package service
 
 import (
 	"aitrics-vital-signs/api-server/domain/inference"
+	"aitrics-vital-signs/api-server/domain/patient"
 	"aitrics-vital-signs/api-server/domain/vital"
 	internalVital "aitrics-vital-signs/api-server/internal/vital"
 	"aitrics-vital-signs/api-server/pkg/constant"
@@ -14,10 +15,17 @@ import (
 )
 
 type inferenceService struct {
-	vitalRepo vital.VitalRepository
+	vitalRepo   vital.VitalRepository
+	patientRepo patient.PatientRepository
 }
 
 func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request inference.VitalRiskRequest) (*inference.VitalRiskResponse, error) {
+	// 등록된 patient 검증
+	_, err := i.patientRepo.FindPatientByID(ctx, request.PatientID)
+	if err != nil {
+		return nil, pkgError.Wrap(err)
+	}
+
 	// 환경변수에서 시간 범위 읽기 (기본값: 24시간)
 	timeWindowHours := envs.VitalRiskTimeWindowHours
 
@@ -96,8 +104,9 @@ func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request infer
 	}, nil
 }
 
-func NewInferenceService(vitalRepo vital.VitalRepository) inference.InferenceService {
+func NewInferenceService(vitalRepo vital.VitalRepository, patientRepo patient.PatientRepository) inference.InferenceService {
 	return &inferenceService{
-		vitalRepo: vitalRepo,
+		vitalRepo:   vitalRepo,
+		patientRepo: patientRepo,
 	}
 }
