@@ -13,12 +13,11 @@ type vitalService struct {
 
 func (v *vitalService) UpsertVital(ctx context.Context, request vital.UpsertVitalRequest) error {
 	// 기존 Vital 데이터 조회
-	existingVital, err := v.repo.FindVitalByPatientIDAndRecordedAtAndVitalType(
-		ctx,
-		request.PatientID,
-		request.RecordedAt,
-		request.VitalType,
-	)
+	existingVital, err := v.repo.FindVitalByPatientIDAndRecordedAtAndVitalType(ctx, vital.FindVitalByPatientIDAndRecordedAtAndVitalTypeParam{
+		PatientID:  request.PatientID,
+		RecordedAt: request.RecordedAt,
+		VitalType:  request.VitalType,
+	})
 
 	now := time.Now().UTC()
 
@@ -67,13 +66,12 @@ func (v *vitalService) UpsertVital(ctx context.Context, request vital.UpsertVita
 
 func (v *vitalService) GetVitalsByPatientIDAndDateRange(ctx context.Context, request vital.GetVitalsRequest) (*vital.GetVitalsResponse, error) {
 	// Repository에서 Vital 데이터 조회
-	vitals, err := v.repo.FindVitalsByPatientIDAndDateRange(
-		ctx,
-		request.PatientID,
-		request.From,
-		request.To,
-		request.VitalType,
-	)
+	vitals, err := v.repo.FindVitalsByPatientIDAndDateRange(ctx, vital.FindVitalsByPatientIDAndDateRangeParam{
+		PatientID: request.PatientID,
+		From:      request.From,
+		To:        request.To,
+		VitalType: request.VitalType,
+	})
 	if err != nil {
 		return nil, pkgError.Wrap(err)
 	}

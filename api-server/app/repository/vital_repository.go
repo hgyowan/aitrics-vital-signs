@@ -15,10 +15,10 @@ type vitalRepository struct {
 	externalGormClient domain.ExternalDBClient
 }
 
-func (v *vitalRepository) FindVitalByPatientIDAndRecordedAtAndVitalType(ctx context.Context, patientID string, recordedAt time.Time, vitalType string) (*vital.Vital, error) {
+func (v *vitalRepository) FindVitalByPatientIDAndRecordedAtAndVitalType(ctx context.Context, param vital.FindVitalByPatientIDAndRecordedAtAndVitalTypeParam) (*vital.Vital, error) {
 	var result vital.Vital
 	if err := v.externalGormClient.MySQL().WithContext(ctx).
-		Where("patient_id = ? AND recorded_at = ? AND vital_type = ?", patientID, recordedAt, vitalType).
+		Where("patient_id = ? AND recorded_at = ? AND vital_type = ?", param.PatientID, param.RecordedAt, param.VitalType).
 		First(&result).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, pkgError.WrapWithCode(err, pkgError.NotFound)

@@ -48,7 +48,11 @@ func Test_UpsertVital_Insert(t *testing.T) {
 				// FindVital → Record Not Found
 				mockVitalRepository.EXPECT().
 					FindVitalByPatientIDAndRecordedAtAndVitalType(
-						gomock.Any(), "P00001234", recordedAt, "HR").
+						gomock.Any(), vital.FindVitalByPatientIDAndRecordedAtAndVitalTypeParam{
+							PatientID:  "P00001234",
+							RecordedAt: recordedAt,
+							VitalType:  "HR",
+						}).
 					Return(nil, pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.NotFound))
 
 				// CreateVital 호출
@@ -79,7 +83,11 @@ func Test_UpsertVital_Insert(t *testing.T) {
 			setupMock: func() {
 				mockVitalRepository.EXPECT().
 					FindVitalByPatientIDAndRecordedAtAndVitalType(
-						gomock.Any(), "P00001234", recordedAt, "HR").
+						gomock.Any(), vital.FindVitalByPatientIDAndRecordedAtAndVitalTypeParam{
+							PatientID:  "P00001234",
+							RecordedAt: recordedAt,
+							VitalType:  "HR",
+						}).
 					Return(nil, pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.NotFound))
 			},
 			wantErr:     true,
@@ -144,7 +152,11 @@ func Test_UpsertVital_Update(t *testing.T) {
 
 				mockVitalRepository.EXPECT().
 					FindVitalByPatientIDAndRecordedAtAndVitalType(
-						gomock.Any(), "P00001234", recordedAt, "HR").
+						gomock.Any(), vital.FindVitalByPatientIDAndRecordedAtAndVitalTypeParam{
+							PatientID:  "P00001234",
+							RecordedAt: recordedAt,
+							VitalType:  "HR",
+						}).
 					Return(existingVital, nil)
 
 				mockVitalRepository.EXPECT().
@@ -180,7 +192,11 @@ func Test_UpsertVital_Update(t *testing.T) {
 
 				mockVitalRepository.EXPECT().
 					FindVitalByPatientIDAndRecordedAtAndVitalType(
-						gomock.Any(), "P00001234", recordedAt, "HR").
+						gomock.Any(), vital.FindVitalByPatientIDAndRecordedAtAndVitalTypeParam{
+							PatientID:  "P00001234",
+							RecordedAt: recordedAt,
+							VitalType:  "HR",
+						}).
 					Return(existingVital, nil)
 			},
 			wantErr:     true,
@@ -208,7 +224,11 @@ func Test_UpsertVital_Update(t *testing.T) {
 
 				mockVitalRepository.EXPECT().
 					FindVitalByPatientIDAndRecordedAtAndVitalType(
-						gomock.Any(), "P00001234", recordedAt, "HR").
+						gomock.Any(), vital.FindVitalByPatientIDAndRecordedAtAndVitalTypeParam{
+							PatientID:  "P00001234",
+							RecordedAt: recordedAt,
+							VitalType:  "HR",
+						}).
 					Return(existingVital, nil)
 
 				// Repository에서 Conflict 반환 (DB level 동시성 제어)
@@ -283,7 +303,12 @@ func Test_GetVitalsByPatientIDAndDateRange(t *testing.T) {
 					},
 				}
 				mockVitalRepository.EXPECT().
-					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", from, to, "HR").
+					FindVitalsByPatientIDAndDateRange(gomock.Any(), vital.FindVitalsByPatientIDAndDateRangeParam{
+						PatientID: "P00001234",
+						From:      from,
+						To:        to,
+						VitalType: "HR",
+					}).
 					Return(vitals, nil)
 			},
 			wantErr:   false,
@@ -322,7 +347,12 @@ func Test_GetVitalsByPatientIDAndDateRange(t *testing.T) {
 					},
 				}
 				mockVitalRepository.EXPECT().
-					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", from, to, "").
+					FindVitalsByPatientIDAndDateRange(gomock.Any(), vital.FindVitalsByPatientIDAndDateRangeParam{
+						PatientID: "P00001234",
+						From:      from,
+						To:        to,
+						VitalType: "",
+					}).
 					Return(vitals, nil)
 			},
 			wantErr:   false,
@@ -338,7 +368,12 @@ func Test_GetVitalsByPatientIDAndDateRange(t *testing.T) {
 			},
 			setupMock: func() {
 				mockVitalRepository.EXPECT().
-					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P99999999", from, to, "HR").
+					FindVitalsByPatientIDAndDateRange(gomock.Any(), vital.FindVitalsByPatientIDAndDateRangeParam{
+						PatientID: "P99999999",
+						From:      from,
+						To:        to,
+						VitalType: "HR",
+					}).
 					Return([]vital.Vital{}, nil)
 			},
 			wantErr:   false,
@@ -354,7 +389,12 @@ func Test_GetVitalsByPatientIDAndDateRange(t *testing.T) {
 			},
 			setupMock: func() {
 				mockVitalRepository.EXPECT().
-					FindVitalsByPatientIDAndDateRange(gomock.Any(), "P00001234", from, to, "HR").
+					FindVitalsByPatientIDAndDateRange(gomock.Any(), vital.FindVitalsByPatientIDAndDateRangeParam{
+						PatientID: "P00001234",
+						From:      from,
+						To:        to,
+						VitalType: "HR",
+					}).
 					Return(nil, pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Get, "db error"))
 			},
 			wantErr:     true,

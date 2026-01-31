@@ -80,8 +80,11 @@ func Test_FindVitalByPatientIDAndRecordedAtAndVitalType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			beforeEachVital(t)
 			tt.setupMock()
-
-			result, err := vitalRepo.FindVitalByPatientIDAndRecordedAtAndVitalType(context.Background(), tt.patientID, tt.recordedAt, tt.vitalType)
+			result, err := vitalRepo.FindVitalByPatientIDAndRecordedAtAndVitalType(context.Background(), vital.FindVitalByPatientIDAndRecordedAtAndVitalTypeParam{
+				PatientID:  tt.patientID,
+				RecordedAt: tt.recordedAt,
+				VitalType:  tt.vitalType,
+			})
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -215,8 +218,12 @@ func Test_FindVitalsByPatientIDAndDateRange(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			beforeEachVital(t)
 			tt.setupMock()
-
-			results, err := vitalRepo.FindVitalsByPatientIDAndDateRange(context.Background(), tt.patientID, tt.from, tt.to, tt.vitalType)
+			results, err := vitalRepo.FindVitalsByPatientIDAndDateRange(context.Background(), vital.FindVitalsByPatientIDAndDateRangeParam{
+				PatientID: tt.patientID,
+				From:      tt.from,
+				To:        tt.to,
+				VitalType: tt.vitalType,
+			})
 
 			if tt.wantErr {
 				require.Error(t, err)
