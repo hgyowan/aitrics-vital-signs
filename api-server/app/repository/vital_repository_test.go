@@ -157,7 +157,7 @@ func Test_FindVitalsByPatientIDAndDateRange(t *testing.T) {
 		patientID string
 		from      time.Time
 		to        time.Time
-		vitalType string
+		vitalType []string
 		setupMock func()
 		wantCount int
 		wantErr   bool
@@ -167,7 +167,7 @@ func Test_FindVitalsByPatientIDAndDateRange(t *testing.T) {
 			patientID: "P00001234",
 			from:      from,
 			to:        to,
-			vitalType: "HR",
+			vitalType: []string{"HR"},
 			setupMock: func() {
 				rows := sqlmock.NewRows([]string{"patient_id", "recorded_at", "vital_type", "value", "version", "created_at"}).
 					AddRow("P00001234", time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC), "HR", 110.0, 1, time.Now().UTC()).
@@ -184,7 +184,7 @@ func Test_FindVitalsByPatientIDAndDateRange(t *testing.T) {
 			patientID: "P00001234",
 			from:      from,
 			to:        to,
-			vitalType: "",
+			vitalType: []string{},
 			setupMock: func() {
 				rows := sqlmock.NewRows([]string{"patient_id", "recorded_at", "vital_type", "value", "version", "created_at"}).
 					AddRow("P00001234", time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC), "HR", 110.0, 1, time.Now().UTC()).
@@ -202,7 +202,7 @@ func Test_FindVitalsByPatientIDAndDateRange(t *testing.T) {
 			patientID: "P99999999",
 			from:      from,
 			to:        to,
-			vitalType: "HR",
+			vitalType: []string{"HR"},
 			setupMock: func() {
 				rows := sqlmock.NewRows([]string{"patient_id", "recorded_at", "vital_type", "value", "version", "created_at"})
 				vitalSQLMock.ExpectQuery("SELECT .* FROM .*vitals.* WHERE .* ORDER BY recorded_at").
@@ -219,10 +219,10 @@ func Test_FindVitalsByPatientIDAndDateRange(t *testing.T) {
 			beforeEachVital(t)
 			tt.setupMock()
 			results, err := vitalRepo.FindVitalsByPatientIDAndDateRange(context.Background(), vital.FindVitalsByPatientIDAndDateRangeParam{
-				PatientID: tt.patientID,
-				From:      tt.from,
-				To:        tt.to,
-				VitalType: tt.vitalType,
+				PatientID:  tt.patientID,
+				From:       tt.from,
+				To:         tt.to,
+				VitalTypes: tt.vitalType,
 			})
 
 			if tt.wantErr {

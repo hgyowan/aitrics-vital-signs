@@ -9,8 +9,8 @@ type FindVitalByPatientIDAndRecordedAtAndVitalTypeParam struct {
 }
 
 type FindVitalsByPatientIDAndDateRangeParam struct {
-	PatientID string
-	From      time.Time
-	To        time.Time
-	VitalType string
+	PatientID  string
+	From       time.Time
+	To         time.Time
+	VitalTypes []string
 }

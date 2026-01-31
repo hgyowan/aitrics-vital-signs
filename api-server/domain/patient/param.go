@@ -17,14 +17,14 @@ type UpdatePatientRequest struct {
 }
 
 type GetPatientVitalsRequest struct {
-	From      string `form:"from" binding:"required"` // RFC3339 format
-	To        string `form:"to" binding:"required"`   // RFC3339 format
-	VitalType string `form:"vital_type" binding:"omitempty,oneof=HR RR SBP DBP SpO2 BT"`
+	From       string   `form:"from" binding:"required"` // RFC3339 format
+	To         string   `form:"to" binding:"required"`   // RFC3339 format
+	VitalTypes []string `form:"vital_types" binding:"omitempty,dive,oneof=HR RR SBP DBP SpO2 BT"`
 }
 
 type GetPatientVitalsResponse struct {
-	PatientID string              `json:"patient_id"`
-	Items     []VitalItemResponse `json:"items"`
+	PatientID string                         `json:"patient_id"`
+	Items     map[string][]VitalItemResponse `json:"items"`
 }
 
 type VitalItemResponse struct {

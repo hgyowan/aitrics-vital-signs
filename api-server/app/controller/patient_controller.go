@@ -81,8 +81,8 @@ func (p *patientController) UpdatePatient(ctx *gin.Context) {
 // @Param patient_id path string true "환자 ID"
 // @Param from query string true "조회 시작 시간 (RFC3339 format)"
 // @Param to query string true "조회 종료 시간 (RFC3339 format)"
-// @Param vital_type query string false "Vital 타입 (HR, RR, SBP, DBP, SpO2, BT)"
-// @Success 200 {object} output.Output{data=vital.GetVitalsResponse}
+// @Param vital_types query []string false "Vital 타입 (HR, RR, SBP, DBP, SpO2, BT)"
+// @Success 200 {object} output.Output{data=patient.GetPatientVitalsResponse}
 // @Failure 400 {object} output.Output "code: 400001 - Wrong parameter"
 // @Failure 500 {object} output.Output "code: 100003 - Fail to get data from db"
 // @Router /v1/patients/{patient_id}/vitals [Get]

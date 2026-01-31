@@ -2,6 +2,7 @@ package service
 
 import (
 	"aitrics-vital-signs/api-server/domain/mock"
+	"aitrics-vital-signs/api-server/domain/patient"
 	"aitrics-vital-signs/api-server/domain/vital"
 	pkgError "aitrics-vital-signs/library/error"
 	"context"
@@ -13,14 +14,16 @@ import (
 )
 
 var (
-	mockVitalRepository *mock.MockVitalRepository
-	vitalSvc            vital.VitalService
+	mockPatientRepository *mock.MockPatientRepository
+	mockVitalRepository   *mock.MockVitalRepository
+	vitalSvc              vital.VitalService
 )
 
 func beforeEachVital(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockVitalRepository = mock.NewMockVitalRepository(ctrl)
-	vitalSvc = NewVitalService(mockVitalRepository)
+	mockPatientRepository = mock.NewMockPatientRepository(ctrl)
+	vitalSvc = NewVitalService(mockVitalRepository, mockPatientRepository)
 }
 
 func Test_UpsertVital_Insert(t *testing.T) {
@@ -45,6 +48,11 @@ func Test_UpsertVital_Insert(t *testing.T) {
 				Version:    1,
 			},
 			setupMock: func() {
+				mockPatientRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P00001234").
+					Return(&patient.Patient{
+						PatientID: "P00001234",
+					}, nil)
 				// FindVital → Record Not Found
 				mockVitalRepository.EXPECT().
 					FindVitalByPatientIDAndRecordedAtAndVitalType(
@@ -81,6 +89,12 @@ func Test_UpsertVital_Insert(t *testing.T) {
 				Version:    5,
 			},
 			setupMock: func() {
+				mockPatientRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P00001234").
+					Return(&patient.Patient{
+						PatientID: "P00001234",
+					}, nil)
+
 				mockVitalRepository.EXPECT().
 					FindVitalByPatientIDAndRecordedAtAndVitalType(
 						gomock.Any(), vital.FindVitalByPatientIDAndRecordedAtAndVitalTypeParam{
@@ -92,6 +106,23 @@ func Test_UpsertVital_Insert(t *testing.T) {
 			},
 			wantErr:     true,
 			expectedErr: pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.WrongParam),
+		},
+		{
+			name: "실패 - patient 존재하지 않음",
+			req: vital.UpsertVitalRequest{
+				PatientID:  "P00001234",
+				RecordedAt: recordedAt,
+				VitalType:  "HR",
+				Value:      110.0,
+				Version:    5,
+			},
+			setupMock: func() {
+				mockPatientRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P00001234").
+					Return(nil, pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.NotFound))
+			},
+			wantErr:     true,
+			expectedErr: pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.NotFound),
 		},
 	}
 
@@ -150,6 +181,12 @@ func Test_UpsertVital_Update(t *testing.T) {
 					UpdatedAt:  &now,
 				}
 
+				mockPatientRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P00001234").
+					Return(&patient.Patient{
+						PatientID: "P00001234",
+					}, nil)
+
 				mockVitalRepository.EXPECT().
 					FindVitalByPatientIDAndRecordedAtAndVitalType(
 						gomock.Any(), vital.FindVitalByPatientIDAndRecordedAtAndVitalTypeParam{
@@ -190,6 +227,12 @@ func Test_UpsertVital_Update(t *testing.T) {
 					UpdatedAt:  &now,
 				}
 
+				mockPatientRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P00001234").
+					Return(&patient.Patient{
+						PatientID: "P00001234",
+					}, nil)
+
 				mockVitalRepository.EXPECT().
 					FindVitalByPatientIDAndRecordedAtAndVitalType(
 						gomock.Any(), vital.FindVitalByPatientIDAndRecordedAtAndVitalTypeParam{
@@ -221,6 +264,12 @@ func Test_UpsertVital_Update(t *testing.T) {
 					CreatedAt:  now,
 					UpdatedAt:  &now,
 				}
+
+				mockPatientRepository.EXPECT().
+					FindPatientByID(gomock.Any(), "P00001234").
+					Return(&patient.Patient{
+						PatientID: "P00001234",
+					}, nil)
 
 				mockVitalRepository.EXPECT().
 					FindVitalByPatientIDAndRecordedAtAndVitalType(

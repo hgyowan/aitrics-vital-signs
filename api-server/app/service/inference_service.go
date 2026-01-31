@@ -7,6 +7,8 @@ import (
 	"aitrics-vital-signs/library/envs"
 	pkgError "aitrics-vital-signs/library/error"
 	"context"
+	"fmt"
+	"math"
 	"time"
 )
 
@@ -23,10 +25,12 @@ func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request infer
 	from := now.Add(-time.Duration(timeWindowHours) * time.Hour)
 	to := now
 
+	// HR, SBP, SpO2 만 처리
 	vitals, err := i.vitalRepo.FindVitalsByPatientIDAndDateRange(ctx, vital.FindVitalsByPatientIDAndDateRangeParam{
-		PatientID: request.PatientID,
-		From:      from,
-		To:        to,
+		PatientID:  request.PatientID,
+		From:       from,
+		To:         to,
+		VitalTypes: []string{constant.VitalTypeHR.String(), constant.VitalTypeSBP.String(), constant.VitalTypeSpO2.String()},
 	})
 	if err != nil {
 		return nil, pkgError.Wrap(err)
@@ -35,10 +39,7 @@ func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request infer
 	// 각 Vital Type별로 데이터 수집
 	vitalData := make(map[string][]float64)
 	for _, v := range vitals {
-		// HR, SBP, SpO2만 처리
-		if v.VitalType == constant.VitalTypeHR.String() || v.VitalType == constant.VitalTypeSBP.String() || v.VitalType == constant.VitalTypeSpO2.String() {
-			vitalData[v.VitalType] = append(vitalData[v.VitalType], v.Value)
-		}
+		vitalData[v.VitalType] = append(vitalData[v.VitalType], v.Value)
 	}
 
 	// 각 Vital Type별 평균 계산
@@ -49,7 +50,7 @@ func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request infer
 			for _, val := range values {
 				sum += val
 			}
-			vitalAverages[vitalType] = sum / float64(len(values))
+			vitalAverages[vitalType] = math.Round((sum/float64(len(values)))*10) / 10
 		}
 	}
 
@@ -58,31 +59,31 @@ func (i *inferenceService) CalculateVitalRisk(ctx context.Context, request infer
 
 	// HR > 120
 	if avg, exists := vitalAverages[constant.VitalTypeHR.String()]; exists && avg > 120 {
-		triggeredRules = append(triggeredRules, "HR > 120")
+		triggeredRules = append(triggeredRules, fmt.Sprintf("%s > 120", constant.VitalTypeHR.String()))
 	}
 
 	// SBP < 90
 	if avg, exists := vitalAverages[constant.VitalTypeSBP.String()]; exists && avg < 90 {
-		triggeredRules = append(triggeredRules, "SBP < 90")
+		triggeredRules = append(triggeredRules, fmt.Sprintf("%s < 90", constant.VitalTypeSBP.String()))
 	}
 
 	// SpO2 < 90
 	if avg, exists := vitalAverages[constant.VitalTypeSpO2.String()]; exists && avg < 90 {
-		triggeredRules = append(triggeredRules, "SpO2 < 90")
+		triggeredRules = append(triggeredRules, fmt.Sprintf("%s < 90", constant.VitalTypeSpO2.String()))
 	}
 
 	// risk_level 결정
-	riskLevel := "LOW"
+	riskLevel := constant.RiskLevelLow
 	triggeredCount := len(triggeredRules)
 	if triggeredCount >= 3 {
-		riskLevel = "HIGH"
+		riskLevel = constant.RiskLevelHigh
 	} else if triggeredCount >= 1 {
-		riskLevel = "MEDIUM"
+		riskLevel = constant.RiskLevelMedium
 	}
 
 	return &inference.VitalRiskResponse{
 		PatientID:          request.PatientID,
-		RiskLevel:          riskLevel,
+		RiskLevel:          riskLevel.String(),
 		TriggeredRules:     triggeredRules,
 		VitalAverages:      vitalAverages,
 		DataPointsAnalyzed: len(vitals),

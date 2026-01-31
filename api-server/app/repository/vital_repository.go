@@ -33,8 +33,8 @@ func (v *vitalRepository) FindVitalsByPatientIDAndDateRange(ctx context.Context,
 		Where("patient_id = ? AND recorded_at >= ? AND recorded_at <= ?", param.PatientID, param.From, param.To)
 
 	// vitalType이 있으면 해당 타입만 필터링
-	if param.VitalType != "" {
-		query = query.Where("vital_type = ?", param.VitalType)
+	if len(param.VitalTypes) > 0 {
+		query = query.Where("vital_type IN ?", param.VitalTypes)
 	}
 
 	if err := query.Order("recorded_at DESC").Find(&results).Error; err != nil {

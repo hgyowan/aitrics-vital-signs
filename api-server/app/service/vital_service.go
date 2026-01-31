@@ -1,6 +1,7 @@
 package service
 
 import (
+	"aitrics-vital-signs/api-server/domain/patient"
 	"aitrics-vital-signs/api-server/domain/vital"
 	pkgError "aitrics-vital-signs/library/error"
 	"context"
@@ -8,10 +9,17 @@ import (
 )
 
 type vitalService struct {
-	repo vital.VitalRepository
+	repo        vital.VitalRepository
+	patientRepo patient.PatientRepository
 }
 
 func (v *vitalService) UpsertVital(ctx context.Context, request vital.UpsertVitalRequest) error {
+	// 등록된 patient 검증
+	_, err := v.patientRepo.FindPatientByID(ctx, request.PatientID)
+	if err != nil {
+		return pkgError.Wrap(err)
+	}
+
 	// 기존 Vital 데이터 조회
 	existingVital, err := v.repo.FindVitalByPatientIDAndRecordedAtAndVitalType(ctx, vital.FindVitalByPatientIDAndRecordedAtAndVitalTypeParam{
 		PatientID:  request.PatientID,
@@ -64,6 +72,6 @@ func (v *vitalService) UpsertVital(ctx context.Context, request vital.UpsertVita
 	return nil
 }
 
-func NewVitalService(repo vital.VitalRepository) vital.VitalService {
-	return &vitalService{repo}
+func NewVitalService(repo vital.VitalRepository, patientRepo patient.PatientRepository) vital.VitalService {
+	return &vitalService{repo, patientRepo}
 }

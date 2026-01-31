@@ -15,3 +15,15 @@ const (
 func (v VitalType) String() string {
 	return string(v)
 }
+
+type RiskLevel string
+
+const (
+	RiskLevelLow    RiskLevel = "LOW"
+	RiskLevelMedium RiskLevel = "MEDIUM"
+	RiskLevelHigh   RiskLevel = "HIGH"
+)
+
+func (r RiskLevel) String() string {
+	return string(r)
+}

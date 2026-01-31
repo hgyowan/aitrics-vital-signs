@@ -64,18 +64,19 @@ func main() {
 
 	dbClient := external.MustExternalDB()
 
-	vitalRepository := repository.NewVitalRepository(dbClient)
-	vitalService := service.NewVitalService(vitalRepository)
-	vitalController := controller.NewVitalController(vitalService)
-	router.NewVitalRouter(engine, vitalController)
-
 	patientRepository := repository.NewPatientRepository(dbClient)
-	patientService := service.NewPatientService(patientRepository, vitalRepository)
-	patientController := controller.NewPatientController(patientService)
-	router.NewPatientRouter(engine, patientController)
+	vitalRepository := repository.NewVitalRepository(dbClient)
 
+	patientService := service.NewPatientService(patientRepository, vitalRepository)
+	vitalService := service.NewVitalService(vitalRepository, patientRepository)
 	inferenceService := service.NewInferenceService(vitalRepository)
+
+	patientController := controller.NewPatientController(patientService)
+	vitalController := controller.NewVitalController(vitalService)
 	inferenceController := controller.NewInferenceController(inferenceService)
+
+	router.NewPatientRouter(engine, patientController)
+	router.NewVitalRouter(engine, vitalController)
 	router.NewInferenceRouter(engine, inferenceController)
 
 	s := &http.Server{

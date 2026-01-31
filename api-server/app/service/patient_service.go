@@ -5,6 +5,7 @@ import (
 	"aitrics-vital-signs/api-server/domain/vital"
 	pkgError "aitrics-vital-signs/library/error"
 	"context"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -79,21 +80,21 @@ func (p *patientService) GetPatientVitals(ctx context.Context, patientID string,
 	}
 
 	vitals, err := p.vitalRepo.FindVitalsByPatientIDAndDateRange(ctx, vital.FindVitalsByPatientIDAndDateRangeParam{
-		PatientID: patientID,
-		From:      from,
-		To:        to,
-		VitalType: request.VitalType,
+		PatientID:  patientID,
+		From:       from,
+		To:         to,
+		VitalTypes: request.VitalTypes,
 	})
 	if err != nil {
 		return nil, pkgError.Wrap(err)
 	}
 
-	items := make([]patient.VitalItemResponse, 0, len(vitals))
+	items := make(map[string][]patient.VitalItemResponse)
 	for _, v := range vitals {
-		items = append(items, patient.VitalItemResponse{
+		items[v.VitalType] = append(items[v.VitalType], patient.VitalItemResponse{
 			VitalType:  v.VitalType,
 			RecordedAt: v.RecordedAt,
-			Value:      v.Value,
+			Value:      math.Round(v.Value*10) / 10,
 		})
 	}
 

@@ -232,9 +232,9 @@ func Test_GetPatientVitals(t *testing.T) {
 			name:      "성공 - vital_type 있을 때",
 			patientID: "P00001234",
 			req: patient.GetPatientVitalsRequest{
-				From:      "2025-12-01T10:00:00Z",
-				To:        "2025-12-01T12:00:00Z",
-				VitalType: "HR",
+				From:       "2025-12-01T10:00:00Z",
+				To:         "2025-12-01T12:00:00Z",
+				VitalTypes: []string{"HR"},
 			},
 			setupMock: func() {
 				from := time.Date(2025, 12, 1, 10, 0, 0, 0, time.UTC)
@@ -250,10 +250,10 @@ func Test_GetPatientVitals(t *testing.T) {
 				}
 				mockVitalRepository.EXPECT().
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), vital.FindVitalsByPatientIDAndDateRangeParam{
-						PatientID: "P00001234",
-						From:      from,
-						To:        to,
-						VitalType: "HR",
+						PatientID:  "P00001234",
+						From:       from,
+						To:         to,
+						VitalTypes: []string{"HR"},
 					}).
 					Return(vitals, nil)
 			},
@@ -263,9 +263,9 @@ func Test_GetPatientVitals(t *testing.T) {
 			name:      "성공 - vital_type 없을 때 (모든 타입)",
 			patientID: "P00001234",
 			req: patient.GetPatientVitalsRequest{
-				From:      "2025-12-01T10:00:00Z",
-				To:        "2025-12-01T12:00:00Z",
-				VitalType: "",
+				From:       "2025-12-01T10:00:00Z",
+				To:         "2025-12-01T12:00:00Z",
+				VitalTypes: []string{""},
 			},
 			setupMock: func() {
 				from := time.Date(2025, 12, 1, 10, 0, 0, 0, time.UTC)
@@ -288,10 +288,10 @@ func Test_GetPatientVitals(t *testing.T) {
 				}
 				mockVitalRepository.EXPECT().
 					FindVitalsByPatientIDAndDateRange(gomock.Any(), vital.FindVitalsByPatientIDAndDateRangeParam{
-						PatientID: "P00001234",
-						From:      from,
-						To:        to,
-						VitalType: "",
+						PatientID:  "P00001234",
+						From:       from,
+						To:         to,
+						VitalTypes: []string{""},
 					}).
 					Return(vitals, nil)
 			},
@@ -301,9 +301,9 @@ func Test_GetPatientVitals(t *testing.T) {
 			name:      "실패 - 잘못된 from 날짜 형식",
 			patientID: "P00001234",
 			req: patient.GetPatientVitalsRequest{
-				From:      "2025-12-01 10:00:00",
-				To:        "2025-12-01T12:00:00Z",
-				VitalType: "HR",
+				From:       "2025-12-01 10:00:00",
+				To:         "2025-12-01T12:00:00Z",
+				VitalTypes: []string{"HR"},
 			},
 			setupMock:   func() {},
 			wantErr:     true,
@@ -313,9 +313,9 @@ func Test_GetPatientVitals(t *testing.T) {
 			name:      "실패 - 잘못된 to 날짜 형식",
 			patientID: "P00001234",
 			req: patient.GetPatientVitalsRequest{
-				From:      "2025-12-01T10:00:00Z",
-				To:        "2025-12-01 12:00:00",
-				VitalType: "HR",
+				From:       "2025-12-01T10:00:00Z",
+				To:         "2025-12-01 12:00:00",
+				VitalTypes: []string{"HR"},
 			},
 			setupMock:   func() {},
 			wantErr:     true,
@@ -325,9 +325,9 @@ func Test_GetPatientVitals(t *testing.T) {
 			name:      "실패 - Vital Repository 에러",
 			patientID: "P00001234",
 			req: patient.GetPatientVitalsRequest{
-				From:      "2025-12-01T10:00:00Z",
-				To:        "2025-12-01T12:00:00Z",
-				VitalType: "HR",
+				From:       "2025-12-01T10:00:00Z",
+				To:         "2025-12-01T12:00:00Z",
+				VitalTypes: []string{"HR"},
 			},
 			setupMock: func() {
 				mockVitalRepository.EXPECT().

@@ -243,14 +243,16 @@ func Test_GetPatientVitals(t *testing.T) {
 		{
 			name:        "성공 - vital_type 있을 때",
 			patientID:   "P00001234",
-			queryString: "from=2025-12-01T10:00:00Z&to=2025-12-01T12:00:00Z&vital_type=HR",
+			queryString: "from=2025-12-01T10:00:00Z&to=2025-12-01T12:00:00Z&vital_types=HR",
 			mockSetup: func(svc *mock.MockPatientService) {
 				svc.EXPECT().
 					GetPatientVitals(gomock.Any(), "P00001234", gomock.Any()).
 					Return(&patient.GetPatientVitalsResponse{
 						PatientID: "P00001234",
-						Items: []patient.VitalItemResponse{
-							{VitalType: "HR", RecordedAt: time.Now(), Value: 110.0},
+						Items: map[string][]patient.VitalItemResponse{
+							"HR": {
+								{VitalType: "HR", RecordedAt: time.Now(), Value: 110.0},
+							},
 						},
 					}, nil)
 			},
@@ -265,9 +267,14 @@ func Test_GetPatientVitals(t *testing.T) {
 					GetPatientVitals(gomock.Any(), "P00001234", gomock.Any()).
 					Return(&patient.GetPatientVitalsResponse{
 						PatientID: "P00001234",
-						Items: []patient.VitalItemResponse{
-							{VitalType: "HR", RecordedAt: time.Now(), Value: 110.0},
-							{VitalType: "RR", RecordedAt: time.Now(), Value: 20.0},
+						Items: map[string][]patient.VitalItemResponse{
+							"HR": {
+								{VitalType: "HR", RecordedAt: time.Now(), Value: 110.0},
+								{VitalType: "RR", RecordedAt: time.Now(), Value: 20.0},
+							},
+							"SBP": {
+								{VitalType: "SBP", RecordedAt: time.Now(), Value: 120.0},
+							},
 						},
 					}, nil)
 			},
@@ -276,35 +283,35 @@ func Test_GetPatientVitals(t *testing.T) {
 		{
 			name:           "실패 - patient_id 파라미터 없음",
 			patientID:      "",
-			queryString:    "from=2025-12-01T10:00:00Z&to=2025-12-01T12:00:00Z&vital_type=HR",
+			queryString:    "from=2025-12-01T10:00:00Z&to=2025-12-01T12:00:00Z&vital_types=HR",
 			mockSetup:      func(svc *mock.MockPatientService) {},
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
 			name:           "실패 - from 파라미터 없음",
 			patientID:      "P00001234",
-			queryString:    "to=2025-12-01T12:00:00Z&vital_type=HR",
+			queryString:    "to=2025-12-01T12:00:00Z&vital_types=HR",
 			mockSetup:      func(svc *mock.MockPatientService) {},
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
 			name:           "실패 - to 파라미터 없음",
 			patientID:      "P00001234",
-			queryString:    "from=2025-12-01T10:00:00Z&vital_type=HR",
+			queryString:    "from=2025-12-01T10:00:00Z&vital_types=HR",
 			mockSetup:      func(svc *mock.MockPatientService) {},
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
 			name:           "실패 - 잘못된 vital_type",
 			patientID:      "P00001234",
-			queryString:    "from=2025-12-01T10:00:00Z&to=2025-12-01T12:00:00Z&vital_type=INVALID",
+			queryString:    "from=2025-12-01T10:00:00Z&to=2025-12-01T12:00:00Z&vital_types=INVALID",
 			mockSetup:      func(svc *mock.MockPatientService) {},
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
 			name:        "실패 - Service 에러 (잘못된 날짜 형식)",
 			patientID:   "P00001234",
-			queryString: "from=2025-12-01T10:00:00Z&to=2025-12-01T12:00:00Z&vital_type=HR",
+			queryString: "from=2025-12-01T10:00:00Z&to=2025-12-01T12:00:00Z&vital_types=HR",
 			mockSetup: func(svc *mock.MockPatientService) {
 				svc.EXPECT().
 					GetPatientVitals(gomock.Any(), "P00001234", gomock.Any()).
@@ -315,7 +322,7 @@ func Test_GetPatientVitals(t *testing.T) {
 		{
 			name:        "실패 - Service 에러 (DB 조회 실패)",
 			patientID:   "P00001234",
-			queryString: "from=2025-12-01T10:00:00Z&to=2025-12-01T12:00:00Z&vital_type=HR",
+			queryString: "from=2025-12-01T10:00:00Z&to=2025-12-01T12:00:00Z&vital_types=HR",
 			mockSetup: func(svc *mock.MockPatientService) {
 				svc.EXPECT().
 					GetPatientVitals(gomock.Any(), "P00001234", gomock.Any()).
