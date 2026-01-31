@@ -16,16 +16,15 @@ import (
 )
 
 var (
-	mockRepository   *mock.MockPatientRepository
-	mockVitalService *mock.MockVitalService
-	svc              patient.PatientService
+	mockRepository *mock.MockPatientRepository
+	svc            patient.PatientService
 )
 
 func beforeEach(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockRepository = mock.NewMockPatientRepository(ctrl)
-	mockVitalService = mock.NewMockVitalService(ctrl)
-	svc = NewPatientService(mockRepository, mockVitalService)
+	mockVitalRepository = mock.NewMockVitalRepository(ctrl)
+	svc = NewPatientService(mockRepository, mockVitalRepository)
 }
 
 func Test_CreatePatient(t *testing.T) {
@@ -224,7 +223,7 @@ func Test_GetPatientVitals(t *testing.T) {
 	tests := []struct {
 		name        string
 		patientID   string
-		req         patient.GetPatientVitalsQueryRequest
+		req         patient.GetPatientVitalsRequest
 		setupMock   func()
 		wantErr     bool
 		expectedErr error
@@ -232,70 +231,76 @@ func Test_GetPatientVitals(t *testing.T) {
 		{
 			name:      "성공 - vital_type 있을 때",
 			patientID: "P00001234",
-			req: patient.GetPatientVitalsQueryRequest{
+			req: patient.GetPatientVitalsRequest{
 				From:      "2025-12-01T10:00:00Z",
 				To:        "2025-12-01T12:00:00Z",
 				VitalType: "HR",
 			},
 			setupMock: func() {
-				expectedResponse := &vital.GetVitalsResponse{
-					PatientID: "P00001234",
-					Items: []vital.VitalItemResponse{
-						{
-							VitalType:  "HR",
-							RecordedAt: time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC),
-							Value:      110.0,
-						},
+				from := time.Date(2025, 12, 1, 10, 0, 0, 0, time.UTC)
+				to := time.Date(2025, 12, 1, 12, 0, 0, 0, time.UTC)
+				vitals := []vital.Vital{
+					{
+						PatientID:  "P00001234",
+						RecordedAt: time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC),
+						VitalType:  "HR",
+						Value:      110.0,
+						Version:    1,
 					},
 				}
-				mockVitalService.EXPECT().
-					GetVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
-					DoAndReturn(func(_ context.Context, req vital.GetVitalsRequest) (*vital.GetVitalsResponse, error) {
-						require.Equal(t, "P00001234", req.PatientID)
-						require.Equal(t, "HR", req.VitalType)
-						return expectedResponse, nil
-					})
+				mockVitalRepository.EXPECT().
+					FindVitalsByPatientIDAndDateRange(gomock.Any(), vital.FindVitalsByPatientIDAndDateRangeParam{
+						PatientID: "P00001234",
+						From:      from,
+						To:        to,
+						VitalType: "HR",
+					}).
+					Return(vitals, nil)
 			},
 			wantErr: false,
 		},
 		{
 			name:      "성공 - vital_type 없을 때 (모든 타입)",
 			patientID: "P00001234",
-			req: patient.GetPatientVitalsQueryRequest{
+			req: patient.GetPatientVitalsRequest{
 				From:      "2025-12-01T10:00:00Z",
 				To:        "2025-12-01T12:00:00Z",
 				VitalType: "",
 			},
 			setupMock: func() {
-				expectedResponse := &vital.GetVitalsResponse{
-					PatientID: "P00001234",
-					Items: []vital.VitalItemResponse{
-						{
-							VitalType:  "HR",
-							RecordedAt: time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC),
-							Value:      110.0,
-						},
-						{
-							VitalType:  "RR",
-							RecordedAt: time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC),
-							Value:      20.0,
-						},
+				from := time.Date(2025, 12, 1, 10, 0, 0, 0, time.UTC)
+				to := time.Date(2025, 12, 1, 12, 0, 0, 0, time.UTC)
+				vitals := []vital.Vital{
+					{
+						PatientID:  "P00001234",
+						RecordedAt: time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC),
+						VitalType:  "HR",
+						Value:      110.0,
+						Version:    1,
+					},
+					{
+						PatientID:  "P00001234",
+						RecordedAt: time.Date(2025, 12, 1, 10, 15, 0, 0, time.UTC),
+						VitalType:  "RR",
+						Value:      20.0,
+						Version:    1,
 					},
 				}
-				mockVitalService.EXPECT().
-					GetVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
-					DoAndReturn(func(_ context.Context, req vital.GetVitalsRequest) (*vital.GetVitalsResponse, error) {
-						require.Equal(t, "P00001234", req.PatientID)
-						require.Equal(t, "", req.VitalType)
-						return expectedResponse, nil
-					})
+				mockVitalRepository.EXPECT().
+					FindVitalsByPatientIDAndDateRange(gomock.Any(), vital.FindVitalsByPatientIDAndDateRangeParam{
+						PatientID: "P00001234",
+						From:      from,
+						To:        to,
+						VitalType: "",
+					}).
+					Return(vitals, nil)
 			},
 			wantErr: false,
 		},
 		{
 			name:      "실패 - 잘못된 from 날짜 형식",
 			patientID: "P00001234",
-			req: patient.GetPatientVitalsQueryRequest{
+			req: patient.GetPatientVitalsRequest{
 				From:      "2025-12-01 10:00:00",
 				To:        "2025-12-01T12:00:00Z",
 				VitalType: "HR",
@@ -307,7 +312,7 @@ func Test_GetPatientVitals(t *testing.T) {
 		{
 			name:      "실패 - 잘못된 to 날짜 형식",
 			patientID: "P00001234",
-			req: patient.GetPatientVitalsQueryRequest{
+			req: patient.GetPatientVitalsRequest{
 				From:      "2025-12-01T10:00:00Z",
 				To:        "2025-12-01 12:00:00",
 				VitalType: "HR",
@@ -317,16 +322,16 @@ func Test_GetPatientVitals(t *testing.T) {
 			expectedErr: pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.WrongParam),
 		},
 		{
-			name:      "실패 - Vital Service 에러",
+			name:      "실패 - Vital Repository 에러",
 			patientID: "P00001234",
-			req: patient.GetPatientVitalsQueryRequest{
+			req: patient.GetPatientVitalsRequest{
 				From:      "2025-12-01T10:00:00Z",
 				To:        "2025-12-01T12:00:00Z",
 				VitalType: "HR",
 			},
 			setupMock: func() {
-				mockVitalService.EXPECT().
-					GetVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
+				mockVitalRepository.EXPECT().
+					FindVitalsByPatientIDAndDateRange(gomock.Any(), gomock.Any()).
 					Return(nil, pkgError.WrapWithCode(pkgError.EmptyBusinessError(), pkgError.Get, "db error"))
 			},
 			wantErr:     true,
@@ -350,7 +355,7 @@ func Test_GetPatientVitals(t *testing.T) {
 					actualBE, _ := pkgError.CastBusinessError(err)
 					require.Equal(t, expectedBE.Status.Code, actualBE.Status.Code)
 				}
-			} else{
+			} else {
 				require.NoError(t, err)
 				require.NotNil(t, result)
 				require.Equal(t, tt.patientID, result.PatientID)

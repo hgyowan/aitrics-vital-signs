@@ -11,7 +11,6 @@ package mock
 
 import (
 	patient "aitrics-vital-signs/api-server/domain/patient"
-	vital "aitrics-vital-signs/api-server/domain/vital"
 	context "context"
 	reflect "reflect"
 
@@ -57,10 +56,10 @@ func (mr *MockPatientServiceMockRecorder) CreatePatient(ctx, request any) *gomoc
 }
 
 // GetPatientVitals mocks base method.
-func (m *MockPatientService) GetPatientVitals(ctx context.Context, patientID string, request patient.GetPatientVitalsQueryRequest) (*vital.GetVitalsResponse, error) {
+func (m *MockPatientService) GetPatientVitals(ctx context.Context, patientID string, request patient.GetPatientVitalsRequest) (*patient.GetPatientVitalsResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPatientVitals", ctx, patientID, request)
-	ret0, _ := ret[0].(*vital.GetVitalsResponse)
+	ret0, _ := ret[0].(*patient.GetPatientVitalsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -3,7 +3,6 @@ package controller
 import (
 	"aitrics-vital-signs/api-server/domain/mock"
 	"aitrics-vital-signs/api-server/domain/patient"
-	"aitrics-vital-signs/api-server/domain/vital"
 	pkgError "aitrics-vital-signs/library/error"
 	"net/http"
 	"net/http/httptest"
@@ -248,9 +247,9 @@ func Test_GetPatientVitals(t *testing.T) {
 			mockSetup: func(svc *mock.MockPatientService) {
 				svc.EXPECT().
 					GetPatientVitals(gomock.Any(), "P00001234", gomock.Any()).
-					Return(&vital.GetVitalsResponse{
+					Return(&patient.GetPatientVitalsResponse{
 						PatientID: "P00001234",
-						Items: []vital.VitalItemResponse{
+						Items: []patient.VitalItemResponse{
 							{VitalType: "HR", RecordedAt: time.Now(), Value: 110.0},
 						},
 					}, nil)
@@ -264,9 +263,9 @@ func Test_GetPatientVitals(t *testing.T) {
 			mockSetup: func(svc *mock.MockPatientService) {
 				svc.EXPECT().
 					GetPatientVitals(gomock.Any(), "P00001234", gomock.Any()).
-					Return(&vital.GetVitalsResponse{
+					Return(&patient.GetPatientVitalsResponse{
 						PatientID: "P00001234",
-						Items: []vital.VitalItemResponse{
+						Items: []patient.VitalItemResponse{
 							{VitalType: "HR", RecordedAt: time.Now(), Value: 110.0},
 							{VitalType: "RR", RecordedAt: time.Now(), Value: 20.0},
 						},

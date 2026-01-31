@@ -93,7 +93,7 @@ func (p *patientController) GetPatientVitals(ctx *gin.Context) {
 		return
 	}
 
-	var queryParams patient.GetPatientVitalsQueryRequest
+	var queryParams patient.GetPatientVitalsRequest
 	if err := ctx.ShouldBindQuery(&queryParams); err != nil {
 		output.AppendErrorContext(ctx, pkgError.WrapWithCode(err, pkgError.WrongParam, err.Error(), "fail to parse query parameters"), nil)
 		return

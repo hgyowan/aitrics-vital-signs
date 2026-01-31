@@ -64,34 +64,6 @@ func (v *vitalService) UpsertVital(ctx context.Context, request vital.UpsertVita
 	return nil
 }
 
-func (v *vitalService) GetVitalsByPatientIDAndDateRange(ctx context.Context, request vital.GetVitalsRequest) (*vital.GetVitalsResponse, error) {
-	// Repository에서 Vital 데이터 조회
-	vitals, err := v.repo.FindVitalsByPatientIDAndDateRange(ctx, vital.FindVitalsByPatientIDAndDateRangeParam{
-		PatientID: request.PatientID,
-		From:      request.From,
-		To:        request.To,
-		VitalType: request.VitalType,
-	})
-	if err != nil {
-		return nil, pkgError.Wrap(err)
-	}
-
-	// Response 변환
-	items := make([]vital.VitalItemResponse, 0, len(vitals))
-	for _, v := range vitals {
-		items = append(items, vital.VitalItemResponse{
-			VitalType:  v.VitalType,
-			RecordedAt: v.RecordedAt,
-			Value:      v.Value,
-		})
-	}
-
-	return &vital.GetVitalsResponse{
-		PatientID: request.PatientID,
-		Items:     items,
-	}, nil
-}
-
 func NewVitalService(repo vital.VitalRepository) vital.VitalService {
 	return &vitalService{repo}
 }

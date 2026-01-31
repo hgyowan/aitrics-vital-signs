@@ -5,5 +5,4 @@ import "context"
 
 type VitalService interface {
 	UpsertVital(ctx context.Context, request UpsertVitalRequest) error
-	GetVitalsByPatientIDAndDateRange(ctx context.Context, request GetVitalsRequest) (*GetVitalsResponse, error)
 }

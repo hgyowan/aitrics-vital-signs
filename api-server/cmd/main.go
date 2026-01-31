@@ -70,9 +70,13 @@ func main() {
 	router.NewVitalRouter(engine, vitalController)
 
 	patientRepository := repository.NewPatientRepository(dbClient)
-	patientService := service.NewPatientService(patientRepository, vitalService)
+	patientService := service.NewPatientService(patientRepository, vitalRepository)
 	patientController := controller.NewPatientController(patientService)
 	router.NewPatientRouter(engine, patientController)
+
+	inferenceService := service.NewInferenceService(vitalRepository)
+	inferenceController := controller.NewInferenceController(inferenceService)
+	router.NewInferenceRouter(engine, inferenceController)
 
 	s := &http.Server{
 		Addr:    fmt.Sprintf(":%s", envs.ServerPort),

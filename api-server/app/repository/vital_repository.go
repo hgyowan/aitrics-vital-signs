@@ -6,7 +6,6 @@ import (
 	pkgError "aitrics-vital-signs/library/error"
 	"context"
 	"errors"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -28,14 +27,14 @@ func (v *vitalRepository) FindVitalByPatientIDAndRecordedAtAndVitalType(ctx cont
 	return &result, nil
 }
 
-func (v *vitalRepository) FindVitalsByPatientIDAndDateRange(ctx context.Context, patientID string, from time.Time, to time.Time, vitalType string) ([]vital.Vital, error) {
+func (v *vitalRepository) FindVitalsByPatientIDAndDateRange(ctx context.Context, param vital.FindVitalsByPatientIDAndDateRangeParam) ([]vital.Vital, error) {
 	var results []vital.Vital
 	query := v.externalGormClient.MySQL().WithContext(ctx).
-		Where("patient_id = ? AND recorded_at >= ? AND recorded_at <= ?", patientID, from, to)
+		Where("patient_id = ? AND recorded_at >= ? AND recorded_at <= ?", param.PatientID, param.From, param.To)
 
 	// vitalType이 있으면 해당 타입만 필터링
-	if vitalType != "" {
-		query = query.Where("vital_type = ?", vitalType)
+	if param.VitalType != "" {
+		query = query.Where("vital_type = ?", param.VitalType)
 	}
 
 	if err := query.Order("recorded_at DESC").Find(&results).Error; err != nil {

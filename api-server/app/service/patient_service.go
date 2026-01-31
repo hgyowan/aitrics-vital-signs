@@ -11,8 +11,8 @@ import (
 )
 
 type patientService struct {
-	repo         patient.PatientRepository
-	vitalService vital.VitalService
+	repo      patient.PatientRepository
+	vitalRepo vital.VitalRepository
 }
 
 func (p *patientService) CreatePatient(ctx context.Context, request patient.CreatePatientRequest) error {
@@ -66,7 +66,7 @@ func (p *patientService) UpdatePatient(ctx context.Context, patientID string, re
 	return nil
 }
 
-func (p *patientService) GetPatientVitals(ctx context.Context, patientID string, request patient.GetPatientVitalsQueryRequest) (*vital.GetVitalsResponse, error) {
+func (p *patientService) GetPatientVitals(ctx context.Context, patientID string, request patient.GetPatientVitalsRequest) (*patient.GetPatientVitalsResponse, error) {
 	// Query Parameter 날짜 파싱
 	from, err := time.Parse(time.RFC3339, request.From)
 	if err != nil {
@@ -78,7 +78,7 @@ func (p *patientService) GetPatientVitals(ctx context.Context, patientID string,
 		return nil, pkgError.WrapWithCode(err, pkgError.WrongParam, "invalid to date format")
 	}
 
-	vitals, err := p.vitalService.GetVitalsByPatientIDAndDateRange(ctx, vital.GetVitalsRequest{
+	vitals, err := p.vitalRepo.FindVitalsByPatientIDAndDateRange(ctx, vital.FindVitalsByPatientIDAndDateRangeParam{
 		PatientID: patientID,
 		From:      from,
 		To:        to,
@@ -88,12 +88,24 @@ func (p *patientService) GetPatientVitals(ctx context.Context, patientID string,
 		return nil, pkgError.Wrap(err)
 	}
 
-	return vitals, nil
+	items := make([]patient.VitalItemResponse, 0, len(vitals))
+	for _, v := range vitals {
+		items = append(items, patient.VitalItemResponse{
+			VitalType:  v.VitalType,
+			RecordedAt: v.RecordedAt,
+			Value:      v.Value,
+		})
+	}
+
+	return &patient.GetPatientVitalsResponse{
+		PatientID: patientID,
+		Items:     items,
+	}, nil
 }
 
-func NewPatientService(repo patient.PatientRepository, vitalService vital.VitalService) patient.PatientService {
+func NewPatientService(repo patient.PatientRepository, vitalRepo vital.VitalRepository) patient.PatientService {
 	return &patientService{
-		repo:         repo,
-		vitalService: vitalService,
+		repo:      repo,
+		vitalRepo: vitalRepo,
 	}
 }
