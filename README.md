@@ -128,9 +128,12 @@ cd api-server && go test ./...
          |                        |<---(6) Conflict! ---- |
          |                        | (DB Version is 2)     |
 ```
-*상세 로직은 api-server/app/service/vital_service.go 를 참고하세요.*
+*상세 로직은 api-server/app/service/vital_service.go 를 참고해주세요.*
 
 ## AI Agent 활용 기록
 - ai-history/AITRICS.md 의 내용을 참고하도록 하였습니다.
 - ai-history/history 에 CLAUDE 사용에대한 전반적인 내용이 기록되어 있습니다.
 - api-server 하위 각 디렉토리에 CLAUDE.md 를 지정하고 각 레이어에 대한 코드 생성 규칙을 정의하였습니다.
+
+## 추가 개선 필요 내용
+- 실제 mysql 환경에서의 비즈니스 로직에 정의돈 optimistic lock 동시성 테스트를 위해 testcontainers 를 활용해도 좋을것 같습니다.
